@@ -669,6 +669,18 @@
     opacity: 1;
 }
 /* FIM CSS NOVO */
+/* INÍCIO CSS NOVO - INFORMATIVO DE DATA */
+#last-update-info {
+    font-size: 0.9rem;
+    color: var(--text-light-color);
+    background-color: color-mix(in srgb, var(--border-color) 30%, transparent);
+    padding: 5px 15px;
+    border-radius: var(--border-radius-md);
+    display: inline-block;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+}
+/* FIM CSS NOVO */
 
     </style>
 </head>
@@ -693,6 +705,17 @@
     <div id="dashboard-wrapper">
         <div class="container">
             <header>
+ <div id="user-info-card" style="display: none;">
+        ...
+    </div>
+    
+    <h1>Dashboard de OKRs</h1>
+    <p>Avaliação de Resultados e Performance</p>
+
+    <div id="last-update-info" style="display: none;"></div>
+    <div class="header-actions">
+        ...
+    </div>
     <div id="user-info-card" style="display: none;">
         <span id="user-info-text"></span>
         <button id="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
@@ -928,7 +951,6 @@
         isManager: false
     };
 
-    // Função para decodificar o token JWT recebido do Google
     function parseJwt(token) {
         try {
             return JSON.parse(atob(token.split('.')[1]));
@@ -937,55 +959,42 @@
         }
     }
 
-    // Função chamada pelo Google após um login bem-sucedido
     function handleCredentialResponse(response) {
         const decodedToken = parseJwt(response.credential);
 
         if (decodedToken) {
-            // Salva o token no cache do navegador para manter a sessão
             localStorage.setItem('googleUserToken', response.credential);
             
             currentUser.email = decodedToken.email;
             currentUser.name = decodedToken.name;
             
-            // Definição de acesso de gestor
             const managerEmails = ['lorhanska@gmail.com'];
             currentUser.isManager = managerEmails.includes(currentUser.email);
 
-            // Esconde a tela de login e exibe o dashboard
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('dashboard-wrapper').style.display = 'block';
             
-            // Inicia o dashboard principal após o login
             initializeDashboard(); 
         } else {
             alert("Falha no login. Não foi possível verificar suas credenciais. Tente novamente.");
-            localStorage.removeItem('googleUserToken'); // Limpa token inválido
+            localStorage.removeItem('googleUserToken');
         }
     }
 
-    // Função para fazer logout
     function logout() {
-        // Limpa o token do cache do navegador
         localStorage.removeItem('googleUserToken');
-        // Desabilita o login automático do Google na próxima visita
         google.accounts.id.disableAutoSelect();
-        // Recarrega a página para voltar à tela de login
         location.reload();
     }
 
-    // Função que verifica o estado do login assim que a página carrega
     (function checkLoginState() {
         const userToken = localStorage.getItem('googleUserToken');
         if (userToken) {
             const decodedToken = parseJwt(userToken);
             
-            // Verifica se o token não está expirado
             if (decodedToken && (decodedToken.exp * 1000 > Date.now())) {
-                // Se o token for válido, loga o usuário automaticamente
                 handleCredentialResponse({ credential: userToken });
             } else {
-                // Se o token expirou, remove do cache
                 localStorage.removeItem('googleUserToken');
             }
         }
@@ -993,29 +1002,31 @@
 
     // O Dashboard só inicializa após o login
     function initializeDashboard() {
-        /*
-        -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-        Sempre que uma alteração funcional for implementada neste script,
-        lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-        Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-        */
-
-        // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
         const userInfoCard = document.getElementById('user-info-card');
         const userInfoText = document.getElementById('user-info-text');
         const logoutButton = document.getElementById('logout-button');
+        const clearDataButton = document.getElementById('limpar-dados-button');
+        // --- NOVO: Referência ao elemento de info da data ---
+        const lastUpdateInfo = document.getElementById('last-update-info');
 
         if (currentUser.name) {
-            // Adiciona um ícone e o nome do usuário ao card
             userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
             userInfoCard.style.display = 'flex';
         }
 
         logoutButton.addEventListener('click', logout);
-        // --- FIM DA NOVA LÓGICA DE USUÁRIO ---
+        
+        clearDataButton.addEventListener('click', () => {
+            if (confirm('Isso irá remover os dados das planilhas do cache e recarregar a página. Deseja continuar?')) {
+                localStorage.removeItem('cachedActivities');
+                localStorage.removeItem('cachedClients');
+                // --- NOVO: Limpa também o timestamp ---
+                localStorage.removeItem('cachedDataTimestamp');
+                alert('Dados removidos. A página será recarregada.');
+                location.reload();
+            }
+        });
 
-
-        // O código do dashboard agora é executado dentro desta função
         const themeToggle = document.getElementById('theme-toggle');
         
         const applyTheme = (isLight) => {
@@ -1055,146 +1066,201 @@
             if (dateInput instanceof Date) return dateInput;
             
             const dateStr = String(dateInput).trim();
-            
             const parts = dateStr.split(/[-/]/);
 
-            if (parts.length !== 3 || parts[0].length !== 4) {
-                return null;
-            }
+            if (parts.length !== 3 || parts[0].length !== 4) return null;
 
             const year = parseInt(parts[0], 10);
             const month = parseInt(parts[1], 10);
             const day = parseInt(parts[2], 10);
 
-            if (isNaN(year) || isNaN(month) || isNaN(day)) {
-                return null;
-            }
+            if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
             
             const date = new Date(Date.UTC(year, month - 1, day));
             
             if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
                 return date;
             }
-
             return null;
         };
+
+        // --- NOVO: Função para exibir a data de atualização ---
+        const displayUpdateTime = (isoString) => {
+            if (isoString) {
+                const date = new Date(isoString);
+                const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                const formattedDate = date.toLocaleString('pt-BR', options);
+                lastUpdateInfo.innerHTML = `<i class="fas fa-info-circle"></i> Última atualização dos dados: <strong>${formattedDate}</strong>`;
+                lastUpdateInfo.style.display = 'inline-block';
+            } else {
+                lastUpdateInfo.style.display = 'none';
+            }
+        };
         
-        const onboardingDashboard = document.getElementById('onboarding-dashboard');
-        const selectOnboardingTeam = document.getElementById('select-onboarding-team');
-        const selectISM = document.getElementById('select-ism');
-        const onboardingGeneralGrid = document.getElementById('onboarding-general-grid');
-        const onboardingActivitiesGrid = document.getElementById('onboarding-activities-grid');
-        const onboardingGeneralTitle = document.getElementById('onboarding-general-title');
-        const onboardingActivitiesTitle = document.getElementById('onboarding-activities-title');
-
-
-        const fileAtividadesInput = document.getElementById('file-atividades'), fileClientesInput = document.getElementById('file-clientes');
-        const selectCS = document.getElementById('select-cs'), selectSegmento = document.getElementById('select-segmento');
-        const selectMonth = document.getElementById('select-month'), selectYear = document.getElementById('select-year');
+        const fileAtividadesInput = document.getElementById('file-atividades');
+        const fileClientesInput = document.getElementById('file-clientes');
+        const selectCS = document.getElementById('select-cs');
+        const selectSegmento = document.getElementById('select-segmento');
+        const selectMonth = document.getElementById('select-month');
+        const selectYear = document.getElementById('select-year');
         const selectPeriod = document.getElementById('select-period');
-        const onboardingToggle = document.getElementById('include-onboarding-toggle');
-        const statusMessage = document.getElementById('status-message'), dashboard = document.getElementById('dashboard');
-        const periodView = document.getElementById('period-view');
-        const okrGrid = document.getElementById('okr-grid-container'), generalGrid = document.getElementById('general-indicators-grid');
-        const playbookGrid = document.getElementById('playbooks-grid'), okrTitleHeader = document.getElementById('okr-title-header');
-        const tabsContainer = document.querySelector('.tabs');
-        const detailsModal = document.getElementById('details-modal'), settingsModal = document.getElementById('settings-modal'), client360Modal = document.getElementById('client-360-modal');
+        const statusMessage = document.getElementById('status-message');
+        const dashboard = document.getElementById('dashboard');
         
         let rawActivities = [], rawClients = [];
-        let dataStore = {};
-        let onboardingDataStore = {};
-        let appGoals = {};
+        
+        const initializeData = () => {
+            const cachedActivities = localStorage.getItem('cachedActivities');
+            const cachedClients = localStorage.getItem('cachedClients');
+            // --- NOVO: Recupera o timestamp ---
+            const cachedTimestamp = localStorage.getItem('cachedDataTimestamp');
 
-        const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
-
-        const loadGoals = () => {
-            const savedGoals = localStorage.getItem('dashboardOKRsGoals');
-            appGoals = savedGoals ? JSON.parse(savedGoals) : { ...defaultGoals };
-            Object.keys(appGoals).forEach(key => {
-                const input = document.getElementById(`goal-${key}`);
-                if (input) input.value = appGoals[key];
-            });
-        };
-
-        const saveGoals = () => {
-            Object.keys(defaultGoals).forEach(key => {
-                const input = document.getElementById(`goal-${key}`);
-                if (input) { appGoals[key] = parseFloat(input.value) || defaultGoals[key]; }
-            });
-            localStorage.setItem('dashboardOKRsGoals', JSON.stringify(appGoals));
-            alert('Metas salvas com sucesso!');
-            settingsModal.style.display = 'none';
-            updateDashboard();
-        };
-
-        const readFile = (file) => new Promise((resolve, reject) => {
-            
-            const excelSerialToDateObject = (serial) => {
-                const correctedSerial = serial + 1;
-                const excelTimestamp = (correctedSerial - 25569) * 86400 * 1000;
-                const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
-                return new Date(excelTimestamp + timezoneOffset);
-            }
-
-            const transpilePipeToCommaCSV = (pipeText) => {
-                let inQuotes = false;
-                let newCsvText = '';
-                for (let i = 0; i < pipeText.length; i++) {
-                    const char = pipeText[i];
-                    if (char === '"') inQuotes = !inQuotes;
-                    newCsvText += (char === '|' && !inQuotes) ? ',' : char;
-                }
-                return newCsvText;
-            };
-
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
+            if (cachedActivities && cachedClients) {
+                console.log("Carregando dados do cache...");
                 try {
-                    const data = event.target.result;
-                    const fileName = file.name.toLowerCase();
-                    let workbook;
-
-                    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                        workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                    } else {
-                        const standardCsvText = transpilePipeToCommaCSV(data);
-                        workbook = XLSX.read(standardCsvText, { type: 'string' });
-                    }
-
-                    const sheetName = workbook.SheetNames[0];
-                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+                    rawActivities = JSON.parse(cachedActivities);
+                    rawClients = JSON.parse(cachedClients);
                     
-                    const dateColumns = ["Criado em", "Previsão de conclusão", "Concluída em"];
-                    
-                    jsonData.forEach(row => {
-                        dateColumns.forEach(colName => {
-                            if (row[colName] && typeof row[colName] === 'number') {
-                                row[colName] = excelSerialToDateObject(row[colName]);
-                            }
-                        });
+                    rawActivities.forEach(ativ => {
+                        ativ.PrevisaoConclusao = ativ.PrevisaoConclusao ? new Date(ativ.PrevisaoConclusao) : null;
+                        ativ.ConcluidaEm = ativ.ConcluidaEm ? new Date(ativ.ConcluidaEm) : null;
                     });
                     
-                    resolve(jsonData);
+                    statusMessage.style.display = 'none';
+                    // --- NOVO: Exibe a data de atualização do cache ---
+                    displayUpdateTime(cachedTimestamp);
+                    
+                    setTimeout(() => {
+                        processInitialData();
+                    }, 50);
 
                 } catch (e) {
-                    reject(new Error("Não foi possível processar o arquivo. Verifique se não está corrompido."));
+                    console.error("Erro ao carregar dados do cache:", e);
+                    localStorage.clear(); // Limpa tudo se houver erro
+                    statusMessage.textContent = 'Erro no cache. Por favor, carregue as planilhas para começar.';
                 }
-            };
-
-            reader.onerror = (error) => {
-                reject(new Error("Ocorreu um erro de hardware ou permissão ao tentar ler o arquivo."));
-            };
-
-            if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-                 reader.readAsArrayBuffer(file);
             } else {
-                 reader.readAsText(file, 'UTF-8'); 
+                statusMessage.textContent = 'Por favor, carregue as duas planilhas para começar.';
+                displayUpdateTime(null); // Esconde a data se não houver cache
             }
-        });
+        };
 
-       const processInitialData = () => {
-            statusMessage.textContent = 'Processando dados...';
+        const attemptProcess = () => {
+            if (fileAtividadesInput.files[0] && fileClientesInput.files[0]) {
+                statusMessage.textContent = 'Lendo arquivos...';
+                Promise.all([readFile(fileAtividadesInput.files[0]), readFile(fileClientesInput.files[0])])
+                    .then(([atividadesJson, clientesJson]) => { 
+                        rawActivities = atividadesJson; 
+                        rawClients = clientesJson;
+                        // --- NOVO: Salva os dados e o timestamp atual no localStorage ---
+                        const currentTimestamp = new Date().toISOString();
+                        try {
+                            localStorage.setItem('cachedActivities', JSON.stringify(rawActivities));
+                            localStorage.setItem('cachedClients', JSON.stringify(rawClients));
+                            localStorage.setItem('cachedDataTimestamp', currentTimestamp);
+                            console.log("Dados salvos no cache.");
+                        } catch (e) {
+                            console.error("Erro ao salvar no cache (limite de tamanho pode ter sido excedido):", e);
+                            alert("Não foi possível salvar os dados no cache. O arquivo pode ser muito grande.");
+                        }
+                        
+                        statusMessage.style.display = 'none';
+                        // --- NOVO: Exibe a data do novo carregamento ---
+                        displayUpdateTime(currentTimestamp);
+
+                        setTimeout(() => {
+                            processInitialData();
+                        }, 50);
+                    })
+                    .catch(err => { 
+                        statusMessage.textContent = 'Erro ao ler. Verifique os arquivos e o console (F12) para mais detalhes.'; 
+                        console.error(err); 
+                    });
+            }
+        };
+        
+        const autoSelectSegment = (clients) => {
+            if (!clients || clients.length === 0) return;
+            let midEnterpriseCount = 0, smbCount = 0;
+            clients.forEach(c => {
+                const segmento = normalizeText(c.Segmento || '');
+                if (segmento === 'mid-market' || segmento === 'enterprise') midEnterpriseCount++;
+                else if (segmento.includes('smb')) smbCount++;
+            });
+
+            if (midEnterpriseCount > smbCount) {
+                selectSegmento.value = 'MID/Enterprise';
+            } else {
+                const smbClients = clients.filter(c => normalizeText(c.Segmento || '').includes('smb'));
+                let smbCadCount = 0, smbMultiCount = 0;
+                smbClients.forEach(c => {
+                    const clientName = (c.Cliente || '').trim().toLowerCase();
+                    if (clientName.endsWith('solidworks') || clientName.endsWith('solidworks electrical')) smbCadCount++;
+                    else smbMultiCount++;
+                });
+                selectSegmento.value = smbCadCount > smbMultiCount ? 'SMB CAD' : 'SMB Multiprodutos';
+            }
+        };
+
+        const populateFilters = () => {
+            const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+            selectCS.innerHTML = '';
+            
+            if (currentUser.isManager) {
+                selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
+            }
+
+            const sortedCS = [...csSet].sort();
+            sortedCS.forEach(cs => { 
+                const option = document.createElement('option'); 
+                option.value = cs; 
+                option.textContent = cs; 
+                selectCS.appendChild(option); 
+            });
+
+            if (!currentUser.isManager) {
+                const userFirstName = currentUser.name.split(' ')[0];
+                const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
+                if (matchingCS) {
+                    selectCS.value = matchingCS;
+                    // --- CORREÇÃO: Chama a função de selecionar segmento aqui ---
+                    const csClients = rawClients.filter(c => c.CS?.trim() === matchingCS);
+                    autoSelectSegment(csClients);
+                }
+                selectCS.disabled = true;
+            }
+            
+            // ... (o restante da função populateFilters e todo o resto do seu código permanece igual) ...
+            // O código abaixo é apenas o final da função para dar contexto.
+            const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
+            selectSegmento.innerHTML = '';
+            segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
+
+            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+            
+            const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
+            const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
+            selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+            const today = new Date();
+            selectMonth.value = today.getMonth();
+            if (years.includes(today.getFullYear())) {
+                selectYear.value = today.getFullYear();
+            } else if (years.length > 0) {
+                selectYear.value = years[0];
+            }
+        };
+        
+        fileAtividadesInput.addEventListener('change', attemptProcess);
+        fileClientesInput.addEventListener('change', attemptProcess);
+
+        // O restante do seu código JavaScript permanece o mesmo daqui para baixo...
+        // ... (incluindo processInitialData, calculateMetrics, renderizações, etc.) ...
+        const processInitialData = () => {
+             // Esta função já existe no seu código, não precisa colar novamente
+             // Apenas para garantir que a lógica flua
+             statusMessage.textContent = 'Processando dados...';
             
             const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
             
@@ -1208,8 +1274,8 @@
                     CS: clienteInfo.CS, 
                     Fase: clienteInfo.Fase,
                     ISM: clienteInfo.ISM,
-                    PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
-                    ConcluidaEm: parseDate(ativ['Concluída em']) 
+                    PrevisaoConclusao: ativ.PrevisaoConclusao, // Já é objeto Date
+                    ConcluidaEm: ativ.ConcluidaEm // Já é objeto Date
                 };
             });
 
