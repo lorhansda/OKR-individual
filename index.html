@@ -1271,13 +1271,22 @@ selectCS.appendChild(option);
 
 // Se o usuário não for gestor, seleciona o CS dele automaticamente
 if (!currentUser.isManager) {
-// Tenta encontrar o nome do CS baseado no nome completo do Google
-const userFirstName = currentUser.name.split(' ')[0];
-const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
-if (matchingCS) {
-selectCS.value = matchingCS;
-}
-selectCS.disabled = true; // Desabilita o seletor para não gestores
+    // Tenta encontrar o nome do CS baseado no nome completo do Google
+    const userFirstName = currentUser.name.split(' ')[0];
+    const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
+    if (matchingCS) {
+        selectCS.value = matchingCS;
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Filtra os clientes que pertencem ao CS logado.
+        // É importante usar rawClients aqui, pois os filtros ainda estão sendo populados.
+        const clientsOfSelectedCS = rawClients.filter(d => d.CS?.trim() === matchingCS);
+        
+        // Chama a função para auto-selecionar o segmento com base na carteira do CS.
+        autoSelectSegment(clientsOfSelectedCS);
+        // --- FIM DA CORREÇÃO ---
+    }
+    selectCS.disabled = true; // Desabilita o seletor para não gestores
 }
 
 updateIsmFilter();
