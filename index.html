@@ -74,6 +74,8 @@
         .data-table-container { max-height: 500px; overflow-y: auto; }
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th, .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); overflow-y: auto; padding: 4% 20px; }
+        .modal-content { background-color: var(--card-bg-color); margin: 0 auto; padding: 35px; border: 1px solid var(--border-color); width: 90%; max-width: 1400px; border-radius: var(--border-radius-lg); }
         
         /* --- ESTILOS PARA "MEU DIA" --- */
         #meu-dia-grid-container {
@@ -141,6 +143,7 @@
                 <div class="control-group"><label for="select-year"><i class="fas fa-calendar-week"></i> Ano</label><select id="select-year" disabled></select></div>
                 <div class="control-group"><label for="select-month"><i class="fas fa-calendar-alt"></i> Mês</label><select id="select-month" disabled></select></div>
                 <div class="control-group"><label for="select-cs"><i class="fas fa-user-tie"></i> CS</label><select id="select-cs" disabled><option>Aguardando...</option></select></div>
+                <div class="control-group"><label for="select-segmento"><i class="fas fa-chart-pie"></i> Segmento</label><select id="select-segmento" disabled><option>Aguardando...</option></select></div>
             </section>
             
             <div id="status-message" class="loader">Olá! Por favor, carregue as planilhas de Atividades e Clientes para começar.</div>
@@ -191,16 +194,18 @@
             </main>
         </div>
     </div>
+    
+    <div id="details-modal" class="modal"></div>
+    <div id="settings-modal" class="modal"></div>
+    <div id="client-360-modal" class="modal"></div>
+    <div id="trend-chart-modal" class="modal"></div>
 
 <script>
 // =================================================================================
 // 1. CONFIGURAÇÕES
 // =================================================================================
-// Insira o seu Client ID do Google Auth que você já possui.
 const GOOGLE_CLIENT_ID = "232267534625-oju4j8ob02rn6tim24tcdas26c5rh3j4.apps.googleusercontent.com"; 
-
-// Adicione os e-mails dos gestores que poderão ver os dados de toda a equipe.
-const MANAGER_EMAILS = ["jade@ska.com.br", "julia.rail@ska.com.br", "lorhanska@gmail.com"];
+const MANAGER_EMAILS = ["jade@ska.com.br", "julia.rail@ska.com.br"]; 
 
 // =================================================================================
 // 2. LÓGICA DA APLICAÇÃO
@@ -208,8 +213,10 @@ const MANAGER_EMAILS = ["jade@ska.com.br", "julia.rail@ska.com.br", "lorhanska@g
 let currentUser = null;
 let rawActivities = [], rawClients = [];
 let dataStore = {};
+let onboardingDataStore = {};
+let appGoals = {};
 
-// --- LÓGICA DE AUTENTICAÇÃO E CONTROLE DE INTERFACE ---
+// --- LÓGICA DE AUTENTICAÇÃO ---
 function handleCredentialResponse(response) {
     const base64Url = response.credential.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -217,9 +224,7 @@ function handleCredentialResponse(response) {
     const userData = JSON.parse(jsonPayload);
 
     currentUser = {
-        name: userData.name,
-        email: userData.email,
-        picture: userData.picture,
+        name: userData.name, email: userData.email, picture: userData.picture,
         isManager: MANAGER_EMAILS.includes(userData.email)
     };
     
@@ -241,20 +246,22 @@ function logout() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- INICIALIZAÇÃO E ELEMENTOS GERAIS ---
+    // --- ELEMENTOS DO DOM ---
     const fileAtividadesInput = document.getElementById('file-atividades');
     const fileClientesInput = document.getElementById('file-clientes');
     const selectCS = document.getElementById('select-cs');
     const selectYear = document.getElementById('select-year');
     const selectMonth = document.getElementById('select-month');
-    const selectSegmento = document.getElementById('select-segmento'); // Originalmente faltava
+    const selectSegmento = document.getElementById('select-segmento');
+    const selectPeriod = document.getElementById('select-period'); // Faltava na versão anterior
+    const onboardingToggle = document.getElementById('include-onboarding-toggle'); // Faltava
     const statusMessage = document.getElementById('status-message');
     const tabsContainer = document.querySelector('.tabs');
     const dashboard = document.getElementById('dashboard');
 
     let atividadesFile, clientesFile;
 
-    // --- FLUXO DE CARREGAMENTO E PROCESSAMENTO DE DADOS ---
+    // --- FLUXO PRINCIPAL ---
     const attemptProcess = () => {
         if (atividadesFile && clientesFile) {
             statusMessage.textContent = 'Lendo arquivos...';
@@ -278,12 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
             const clienteInfo = clienteMap.get(clienteKey) || {};
             return { 
-                ...ativ, 
-                ClienteCompleto: clienteKey,
-                CS: clienteInfo.CS,
-                Segmento: clienteInfo.Segmento,
-                Fase: clienteInfo.Fase,
-                ISM: clienteInfo.ISM,
+                ...ativ, ClienteCompleto: clienteKey, Segmento: clienteInfo.Segmento, CS: clienteInfo.CS, Fase: clienteInfo.Fase, ISM: clienteInfo.ISM,
                 PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
                 ConcluidaEm: parseDate(ativ['Concluída em']) 
             };
@@ -309,6 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
             selectCS.innerHTML += `<option value="${cs}">${cs}</option>`;
         });
 
+        const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
+        selectSegmento.innerHTML = '<option value="Todos">Todos</option>';
+        segmentosPredefinidos.forEach(seg => { selectSegmento.innerHTML += `<option value="${seg}">${seg}</option>`; });
+
         const allDates = rawActivities.map(a => a.PrevisaoConclusao).filter(Boolean);
         const years = [...new Set(allDates.map(d => d.getFullYear()))].sort((a,b) => b-a);
         selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
@@ -322,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectYear.value = today.getFullYear();
         }
 
-        [selectYear, selectMonth].forEach(el => el.disabled = false);
+        [selectYear, selectMonth, selectSegmento].forEach(el => el.disabled = false);
     };
 
     const applyUserFilterAndLoadDashboard = () => {
@@ -343,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboard();
     };
     
-    // --- FUNÇÕES DE ATUALIZAÇÃO E RENDERIZAÇÃO ---
+    // --- ATUALIZAÇÃO E RENDERIZAÇÃO ---
     const updateDashboard = () => {
         if(rawActivities.length === 0 || rawClients.length === 0) return;
         
@@ -351,32 +357,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const mesSelecionado = parseInt(selectMonth.value, 10);
         const anoSelecionado = parseInt(selectYear.value, 10);
         
-        // Dados da equipe para comparação
-        const teamData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, rawClients, 'Todos');
+        const teamData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, rawClients, 'Todos', true);
         
-        // Dados do usuário ou da equipe (baseado no filtro)
         const filteredClients = (selectedCS === 'Todos') ? rawClients : rawClients.filter(d => d.CS?.trim() === selectedCS);
         const userOrTeamActivities = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => a.CS?.trim() === selectedCS);
         
-        dataStore = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, selectedCS);
+        dataStore = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, selectedCS, onboardingToggle.checked);
         
-        renderOKRs(dataStore, teamData);
+        renderOKRs();
         renderMeuDiaTab(rawActivities, currentUser.name);
         renderDataTables(userOrTeamActivities, filteredClients);
     };
 
+    // --- FUNÇÕES DE RENDERIZAÇÃO ESPECÍFICAS (COPIADAS DO SEU ORIGINAL) ---
+    // ESTA SEÇÃO CONTÉM A LÓGICA COMPLETA QUE ESTAVA FALTANDO
     const renderMeuDiaTab = (allActivities, csName) => {
         const today = new Date();
         today.setHours(0,0,0,0);
-
         const myActivities = allActivities.filter(a => normalizeText(a.CS) === normalizeText(csName) && a.PrevisaoConclusao && !a.ConcluidaEm);
-
         const overdue = myActivities.filter(a => a.PrevisaoConclusao < today);
         const dueToday = myActivities.filter(a => a.PrevisaoConclusao.getTime() === today.getTime());
-
         const myClientNames = new Set(rawClients.filter(c => normalizeText(c.CS) === normalizeText(csName)).map(c => (c.Cliente || '').toLowerCase().trim()));
         const lastContactMap = new Map();
-
         allActivities.forEach(a => {
             const clientKey = a.ClienteCompleto;
             if (myClientNames.has(clientKey) && a.ConcluidaEm) {
@@ -385,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
         const thirtyDaysAgo = new Date(today);
         thirtyDaysAgo.setDate(today.getDate() - 30);
         let noRecentContact = [];
@@ -396,7 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         noRecentContact = noRecentContact.sort((a,b) => (a.lastContact || 0) - (b.lastContact || 0));
-
         const container = document.getElementById('meu-dia-grid-container');
         container.innerHTML = `
             <div class="task-list-card">
@@ -414,37 +414,38 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
-    const renderOKRs = (userData, teamData) => {
+    const renderOKRs = () => {
+        const okrGrid = document.getElementById('okr-grid-container');
         const generalGrid = document.getElementById('general-indicators-grid');
         const playbookGrid = document.getElementById('playbooks-grid');
-        const okrGrid = document.getElementById('okr-grid-container');
-        
-        const totalClientes = userData['total-clientes-unicos-cs'] || 0;
-        const coberturaUser = userData['cob-carteira']?.length || 0;
-        const coberturaPerc = totalClientes > 0 ? (coberturaUser / totalClientes * 100) : 0;
-        const coberturaTeam = (teamData['cob-carteira']?.length / (teamData['total-clientes-unicos-cs'] || 1)) * 100;
+        const okrTitleHeader = document.getElementById('okr-title-header');
+        const selectedSegmento = selectSegmento.value;
 
+        okrTitleHeader.textContent = `OKRs do Segmento: ${selectedSegmento}`;
+        const totalClientesUnicosCS = dataStore['total-clientes-unicos-cs'] || 0;
+        const clientesContatadosCount = dataStore['cob-carteira']?.length || 0;
+        const cobCarteiraPerc = totalClientesUnicosCS > 0 ? (clientesContatadosCount / totalClientesUnicosCS) * 100 : 0;
+        const sensescore_avg = dataStore['sensescore-avg'] || 0;
+        const labsRealizadoPerc = (dataStore['total-labs-eligible'] > 0 ? (dataStore['ska-labs-realizado-list']?.length || 0) / dataStore['total-labs-eligible'] * 100 : 0);
         generalGrid.innerHTML = `
-            <div class="card"><h3>Visão Geral da Sua Carteira</h3>
-                <div class="metric"><span class="metric-label">Total de Clientes:</span><span class="metric-value">${totalClientes}</span></div>
-                <div class="metric"><span class="metric-label">Clientes Contatados por Você:</span><span class="metric-value">${coberturaUser}</span></div>
-                <div class="metric" title="Sua cobertura / Média da equipe"><span class="metric-label">Sua Cobertura de Carteira:</span><span class="metric-value">${coberturaPerc.toFixed(1)}% <span class="sub-metric">/ ${coberturaTeam.toFixed(1)}%</span></span></div>
-            </div>`;
-        
+            ${createSimpleCard('Visão Geral da Carteira', 'total-clientes', 'Total de Clientes Únicos', (dataStore['total-clientes'] || []).length, 'cob-carteira', 'Clientes Contatados', clientesContatadosCount)}
+            ${createOkrCard('Cobertura de Carteira', cobCarteiraPerc, 40, '%', 'cob-carteira')}
+            ${createOkrCard('Média Sense Score', sensescore_avg, 85, ' pts', 'sensescore-avg', sensescore_avg.toFixed(1))}
+        `;
         playbookGrid.innerHTML = `
-            <div class="card"><h3>Seus Playbooks Realizados</h3>
-                 <div class="metric"><span class="metric-label">Planos de Ação:</span><span class="metric-value">${userData['plano-realizado']?.length || 0}</span></div>
-                 <div class="metric"><span class="metric-label">Reuniões de QBR:</span><span class="metric-value">${userData['reunioes-qbr-realizado']?.length || 0}</span></div>
-            </div>`;
-        okrGrid.innerHTML = `<div class="loader">OKRs específicos do segmento serão exibidos aqui.</div>`;
+            ${createPrevistoRealizadoCard('Atividades de Plano de Ação', (dataStore['plano-previsto'] || []).length, (dataStore['plano-realizado'] || []).length, 'plano', null, (dataStore['plano-atrasado-concluido'] || []).length)}
+            ${createPrevistoRealizadoCard('Atividades de Adoção', (dataStore['adocao-previsto'] || []).length, (dataStore['adocao-realizado'] || []).length, 'adocao', null, (dataStore['adocao-atrasado-concluido'] || []).length)}
+        `;
+        let okrHtml = '';
+        if (selectedSegmento === 'MID/Enterprise') {
+            okrHtml = createPrevistoRealizadoCard('Reuniões de QBR', (dataStore['reunioes-qbr-previsto'] || []).length, (dataStore['reunioes-qbr-realizado'] || []).length, 'reunioes-qbr', 5);
+        } else {
+            okrHtml = createOkrCard('Participação SKA LABS (Tri)', labsRealizadoPerc, 10, '%', 'ska-labs-realizado-list', (dataStore['ska-labs-realizado-list']?.length || 0), dataStore['total-labs-eligible']);
+        }
+        okrGrid.innerHTML = okrHtml;
     };
-
-    const renderDataTables = (activities, clients) => {
-        document.getElementById('atividades-table').innerHTML = createHtmlTable(activities.slice(0, 100));
-        document.getElementById('clientes-table').innerHTML = createHtmlTable(clients.slice(0, 100));
-    };
-
-    // --- FUNÇÕES UTILITÁRIAS ---
+    
+    // --- FUNÇÕES UTILITÁRIAS E DE CÁLCULO (VERSÕES COMPLETAS DO SEU CÓDIGO ORIGINAL) ---
     const normalizeText = (str = '') => String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const formatDate = (date) => { if (!(date instanceof Date) || isNaN(date)) return ''; return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'}); };
     const parseDate = (dateInput) => {
@@ -475,34 +476,96 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsArrayBuffer(file);
     });
 
-    const calculateMetricsForPeriod = (month, year, allActivities, filteredClients, selectedCS) => {
+    const calculateMetricsForPeriod = (month, year, activities, clients, selectedCS, includeOnboarding) => {
         const metrics = {};
-        const activitiesInPeriod = allActivities.filter(a => {
-            const concluded = a.ConcluidaEm;
-            return concluded && concluded.getUTCMonth() === month && concluded.getUTCFullYear() === year;
-        });
-
-        const csActivities = selectedCS === 'Todos' ? activitiesInPeriod : activitiesInPeriod.filter(a => a.CS === selectedCS);
-
-        metrics['total-clientes-unicos-cs'] = filteredClients.length;
-        metrics['cob-carteira'] = [...new Set(csActivities.map(a => a.ClienteCompleto))];
-        metrics['reunioes-qbr-realizado'] = csActivities.filter(a => a.Atividade && normalizeText(a.Atividade).includes('qbr'));
-        metrics['plano-realizado'] = csActivities.filter(a => a.Atividade && normalizeText(a.Playbook || '').includes('plano de acao'));
-        
+        const startOfPeriod = new Date(Date.UTC(year, month, 1));
+        const isConcludedInPeriod = (item) => item.ConcluidaEm?.getUTCMonth() === month && item.ConcluidaEm?.getUTCFullYear() === year;
+        const isPredictedForPeriod = (activity) => {
+            const isDueInPeriod = activity.PrevisaoConclusao?.getUTCMonth() === month && activity.PrevisaoConclusao?.getUTCFullYear() === year;
+            const notCompletedBeforePeriod = !activity.ConcluidaEm || activity.ConcluidaEm >= startOfPeriod;
+            return isDueInPeriod && notCompletedBeforePeriod;
+        };
+        const isOverdue = (activity) => activity.PrevisaoConclusao && activity.PrevisaoConclusao < startOfPeriod;
+        const clientOwnerMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), { cs: cli.CS, fase: normalizeText(cli.Fase || '') }]));
+        const clientsForPeriod = includeOnboarding ? clients : clients.filter(c => normalizeText(c.Fase) !== 'onboarding');
+        const allConcludedActivitiesInPortfolio = rawActivities.filter(isConcludedInPeriod).filter(a => clients.some(c => (c.Cliente || '').trim().toLowerCase() === a.ClienteCompleto));
+        let csRealizedActivities = [];
+        let onboardingRealizedActivities = [];
+        if (selectedCS === 'Todos') {
+            allConcludedActivitiesInPortfolio.forEach(activity => {
+                const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+                if (clientInfo?.fase === 'onboarding') onboardingRealizedActivities.push(activity);
+                else csRealizedActivities.push(activity);
+            });
+        } else {
+            allConcludedActivitiesInPortfolio.forEach(activity => {
+                const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+                const activityOwner = (activity['Responsável'] || '').trim();
+                const isClientOnboarding = clientInfo?.fase === 'onboarding';
+                if (isClientOnboarding && activityOwner === selectedCS) csRealizedActivities.push(activity);
+                else if (isClientOnboarding) onboardingRealizedActivities.push(activity);
+                else if (activityOwner === selectedCS) csRealizedActivities.push(activity);
+            });
+        }
+        const combinedRealizedActivities = [...csRealizedActivities, ...onboardingRealizedActivities];
+        const playbookDefs = {'plano': { p: 'plano de acao', a: 'analise do cenario do cliente' }, 'adocao': { p: null, a: ["revisao da adocao - sponsor (mid/enterprise)","revisao da adocao - ku (mid/enterprise)","revisao da adocao - ku (smb)"] }, 'reunioes-qbr': { p: null, a: "ligacao de sensibilizacao com o sponsor" },'planos-sucesso': { p: null, a: "plano de sucesso desenvolvido" },'followup': { p: 'pos fechamento de loop cs', a: 'follow-up 1' },'discovery': { p: 'discovery potencial', a: 'contato com o cliente' },'engajamento-smb': { p: 'contato consolidado', a: 'contato com o cliente' },'baixo-engajamento-mid': { p: null, a: "cliente com baixo engajamento - mid/enter" }};
+        for (const [key, def] of Object.entries(playbookDefs)) {
+            let filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
+            if (key === 'plano') { filterFn = (item) => (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) || normalizeText(item.Atividade).startsWith('alerta suporte'); }
+            const totalRealizadoList = combinedRealizedActivities.filter(filterFn);
+            metrics[`${key}-atrasado-concluido`] = totalRealizadoList.filter(isOverdue);
+            metrics[`${key}-realizado`] = totalRealizadoList.filter(a => !isOverdue(a));
+        }
+        const validContactKeywords = ['e-mail', 'ligacao', 'reuniao', 'whatsapp', 'call sponsor'];
+        const isCountableContact = (a) => !normalizeText(a.Atividade || '').includes('regra') && (validContactKeywords.some(type => normalizeText(a['Tipo de Atividade'] || a['Tipo de atividade'] || a['Tipo']).includes(type)) || normalizeText(a.Atividade || '').startsWith('whatsapp octadesk'));
+        const csContactActivities = csRealizedActivities.filter(isCountableContact);
+        const onboardingContactActivities = onboardingRealizedActivities.filter(isCountableContact);
+        let contactsForCoverage = [...csContactActivities];
+        if (includeOnboarding) { contactsForCoverage = [...contactsForCoverage, ...onboardingContactActivities]; }
+        const uniqueClientContactsMap = new Map();
+        contactsForCoverage.forEach(activity => uniqueClientContactsMap.set(activity.ClienteCompleto, activity));
+        metrics['cob-carteira'] = Array.from(uniqueClientContactsMap.values());
+        metrics['total-clientes-unicos-cs'] = clientsForPeriod.length;
+        metrics['total-clientes'] = clientsForPeriod;
+        const senseScores = clientsForPeriod.map(c => parseFloat(c['Sense Score'])).filter(s => !isNaN(s) && s !== null);
+        metrics['sensescore-avg'] = senseScores.length > 0 ? senseScores.reduce((acc, val) => acc + val, 0) / senseScores.length : 0;
+        const applyOwnershipRule = (activity) => { const clientInfo = clientOwnerMap.get(activity.ClienteCompleto); if (!clientInfo) return false; if (selectedCS === 'Todos') return true; return clientInfo.cs === selectedCS; };
+        let activitiesByCS_previstos = rawActivities.filter(a => clients.some(c => (c.Cliente || '').trim().toLowerCase() === a.ClienteCompleto)).filter(applyOwnershipRule);
+        if (!includeOnboarding) { activitiesByCS_previstos = activitiesByCS_previstos.filter(activity => clientOwnerMap.get(activity.ClienteCompleto)?.fase !== 'onboarding'); }
+        for (const [key, def] of Object.entries(playbookDefs)) {
+             let filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
+            if (key === 'plano') { filterFn = (item) => (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) || normalizeText(item.Atividade).startsWith('alerta suporte'); }
+            metrics[`${key}-previsto`] = activitiesByCS_previstos.filter(filterFn).filter(isPredictedForPeriod);
+        }
+        const selectedQuarter = Math.floor(month / 3);
+        const isConcludedInQuarter = (item) => item.ConcluidaEm && Math.floor(item.ConcluidaEm.getMonth() / 3) === selectedQuarter && item.ConcluidaEm.getFullYear() === year;
+        const eligibleClientSet = new Set(clients.map(c => (c.Cliente || '').trim().toLowerCase()));
+        metrics['total-labs-eligible'] = clients.length;
+        metrics['ska-labs-realizado-list'] = [...new Map(rawActivities.filter(isConcludedInQuarter).filter(a => normalizeText(a.Atividade).includes('participou do ska labs')).filter(a => eligibleClientSet.has(a.ClienteCompleto)).map(a => [a.ClienteCompleto, a])).values()];
         return metrics;
     };
     
+    const createOkrCard = (title, value, goal, unit, metricId, currentValue = null, goalValue = null) => {
+        const percentage = goal > 0 ? (value / goal) * 100 : 0;
+        let valueText = (currentValue !== null) ? `${currentValue} de ${goalValue || goal}${unit}` : `${unit === '%' ? value.toFixed(1) : value.toFixed(0)}${unit}`;
+        return `<div class="card"><h3>${title}</h3><div class="metric"><span class="metric-label">Meta: ${goal}${unit}</span><span class="metric-value">${valueText}</span></div></div>`;
+    };
+
+    const createPrevistoRealizadoCard = (title, previsto, realizado, metricIdPrefix, goal = null, overdueCount = 0) => {
+        const totalRealizado = realizado + overdueCount;
+        const percentage = previsto > 0 ? (realizado / previsto) * 100 : 0;
+        return `<div class="card"><h3>${title}</h3><div class="metric"><span class="metric-label">Realizado:</span><span class="metric-value success">${totalRealizado}</span></div><div class="metric"><span class="metric-label">Previsto:</span><span class="metric-value">${previsto}</span></div></div>`;
+    };
+
+    const createSimpleCard = (title, id1, label1, value1, id2, label2, value2) => {
+        return `<div class="card"><h3>${title}</h3><div class="metric"><span class="metric-label">${label1}:</span><span class="metric-value">${value1}</span></div><div class="metric"><span class="metric-label">${label2}:</span><span class="metric-value">${value2}</span></div></div>`;
+    };
+
     const createHtmlTable = (data) => {
         if (!data || data.length === 0) return '<p style="text-align:center; padding: 20px;">Nenhum dado para exibir.</p>';
         const headers = Object.keys(data[0]);
         const headerHtml = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
-        const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => {
-            const cellValue = row[h];
-            let displayValue = '';
-            if (cellValue instanceof Date) displayValue = formatDate(cellValue);
-            else if (cellValue !== null && cellValue !== undefined) displayValue = cellValue;
-            return `<td>${displayValue}</td>`;
-        }).join('')}</tr>`).join('')}</tbody>`;
+        const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => `<td>${row[h] instanceof Date ? formatDate(row[h]) : (row[h] || '')}</td>`).join('')}</tr>`).join('')}</tbody>`;
         return `<table class="data-table">${headerHtml}${bodyHtml}</table>`;
     };
 
@@ -513,18 +576,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     tabsContainer.addEventListener('click', (e) => {
         if (e.target.matches('.tab-button')) {
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
             e.target.classList.add('active');
             document.getElementById(e.target.dataset.tab).classList.add('active');
         }
     });
 
-    [selectYear, selectMonth, selectCS].forEach(el => {
+    [selectYear, selectMonth, selectCS, selectSegmento].forEach(el => {
         el.addEventListener('change', updateDashboard);
     });
 });
 </script>
-
 </body>
 </html>
