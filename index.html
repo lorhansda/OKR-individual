@@ -1194,39 +1194,46 @@ reader.readAsText(file, 'UTF-8');
 });
 
 const processInitialData = () => {
-statusMessage.textContent = 'Processando dados...';
+    statusMessage.textContent = 'Processando dados...';
 
-const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
+    const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
 
-rawActivities = rawActivities.map(ativ => {
-const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
-const clienteInfo = clienteMap.get(clienteKey) || {};
-return { 
-...ativ, 
-ClienteCompleto: clienteKey, 
-Segmento: clienteInfo.Segmento, 
-CS: clienteInfo.CS, 
-Fase: clienteInfo.Fase,
-ISM: clienteInfo.ISM,
-PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
-ConcluidaEm: parseDate(ativ['Concluída em']) 
-};
-});
+    rawActivities = rawActivities.map(ativ => {
+        const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
+        const clienteInfo = clienteMap.get(clienteKey) || {};
+        return { 
+            // ... (resto do objeto)
+        };
+    });
 
-populateFilters();
-renderDataTables();
-statusMessage.style.display = 'none';
-dashboard.style.display = 'block';
-onboardingDashboard.style.display = 'block';
-tabsContainer.style.display = 'flex';
-[selectCS, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
-// Re-disable CS selector if user is not a manager
-if (!currentUser.isManager) {
-selectCS.disabled = true;
-}
-[selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
-updateDashboard();
-renderOverdueView();
+    populateFilters(); // 1. Filtros são populados. Para não-gestores, o CS é definido aqui.
+
+    // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
+    // Após popular, forçamos a seleção do segmento para o CS logado (se não for gestor)
+    if (!currentUser.isManager) {
+        const selectedCS = selectCS.value; // Pega o valor do CS que foi definido em populateFilters()
+        if (selectedCS) {
+             // Filtra a carteira de clientes com base no CS do usuário
+            const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
+            // Executa a função que analisa a carteira e define o segmento correto no dropdown
+            autoSelectSegment(clientsOfLoggedInUser);
+        }
+    }
+    // --- FIM DA CORREÇÃO DEFINITIVA ---
+
+    renderDataTables(); // 2. O restante do processamento continua
+    statusMessage.style.display = 'none';
+    dashboard.style.display = 'block';
+    onboardingDashboard.style.display = 'block';
+    tabsContainer.style.display = 'flex';
+    [selectCS, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+    if (!currentUser.isManager) {
+        selectCS.disabled = true;
+    }
+    [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
+    
+    updateDashboard(); // 3. AGORA, o dashboard é atualizado usando o valor de segmento que acabamos de definir.
+    renderOverdueView();
 };
 
 const updateIsmFilter = () => {
@@ -1276,15 +1283,6 @@ if (!currentUser.isManager) {
     const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
     if (matchingCS) {
         selectCS.value = matchingCS;
-
-        // --- INÍCIO DA CORREÇÃO ---
-        // Filtra os clientes que pertencem ao CS logado.
-        // É importante usar rawClients aqui, pois os filtros ainda estão sendo populados.
-        const clientsOfSelectedCS = rawClients.filter(d => d.CS?.trim() === matchingCS);
-        
-        // Chama a função para auto-selecionar o segmento com base na carteira do CS.
-        autoSelectSegment(clientsOfSelectedCS);
-        // --- FIM DA CORREÇÃO ---
     }
     selectCS.disabled = true; // Desabilita o seletor para não gestores
 }
