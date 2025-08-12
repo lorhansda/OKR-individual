@@ -634,6 +634,41 @@
             background-color: #218838 !important;
         }
         /* FIM CSS NOVO */
+/* INÍCIO CSS NOVO - CARD DE USUÁRIO */
+#user-info-card {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    background-color: var(--card-bg-color);
+    color: var(--text-light-color);
+    padding: 8px 15px;
+    border-radius: var(--border-radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid var(--border-color);
+    z-index: 10;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    animation: fadeInDown 0.6s ease-out;
+}
+
+#logout-button {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease, color 0.2s ease;
+    opacity: 0.7;
+}
+
+#logout-button:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+/* FIM CSS NOVO */
 
     </style>
 </head>
@@ -658,7 +693,13 @@
     <div id="dashboard-wrapper">
         <div class="container">
             <header>
-                <div class="revision-marker">Rev. 5.1</div> <h1>Dashboard de OKRs</h1>
+    <div id="user-info-card" style="display: none;">
+        <span id="user-info-text"></span>
+        <button id="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+    <h1>Dashboard de OKRs</h1>
+    <p>Avaliação de Resultados e Performance</p>
+                 <h1>Dashboard de OKRs</h1>
                 <p>Avaliação de Resultados e Performance</p>
                 <div class="header-actions">
                     <div class="theme-switcher">
@@ -880,7 +921,8 @@
                 </button>
             </div>
         </div>
-    </div> <script>
+    </div> 
+<script>
     // --- LOGIN AUTHENTICATION SCRIPT ---
     let currentUser = {
         email: null,
@@ -888,6 +930,7 @@
         isManager: false
     };
 
+    // Função para decodificar o token JWT recebido do Google
     function parseJwt(token) {
         try {
             return JSON.parse(atob(token.split('.')[1]));
@@ -895,11 +938,15 @@
             return null;
         }
     }
-    
+
+    // Função chamada pelo Google após um login bem-sucedido
     function handleCredentialResponse(response) {
         const decodedToken = parseJwt(response.credential);
 
         if (decodedToken) {
+            // Salva o token no cache do navegador para manter a sessão
+            localStorage.setItem('googleUserToken', response.credential);
+            
             currentUser.email = decodedToken.email;
             currentUser.name = decodedToken.name;
             
@@ -907,6 +954,7 @@
             const managerEmails = ['lorhanska@gmail.com'];
             currentUser.isManager = managerEmails.includes(currentUser.email);
 
+            // Esconde a tela de login e exibe o dashboard
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('dashboard-wrapper').style.display = 'block';
             
@@ -914,21 +962,60 @@
             initializeDashboard(); 
         } else {
             alert("Falha no login. Não foi possível verificar suas credenciais. Tente novamente.");
+            localStorage.removeItem('googleUserToken'); // Limpa token inválido
         }
     }
-    
+
+    // Função para fazer logout
+    function logout() {
+        // Limpa o token do cache do navegador
+        localStorage.removeItem('googleUserToken');
+        // Desabilita o login automático do Google na próxima visita
+        google.accounts.id.disableAutoSelect();
+        // Recarrega a página para voltar à tela de login
+        location.reload();
+    }
+
+    // Função que verifica o estado do login assim que a página carrega
+    (function checkLoginState() {
+        const userToken = localStorage.getItem('googleUserToken');
+        if (userToken) {
+            const decodedToken = parseJwt(userToken);
+            
+            // Verifica se o token não está expirado
+            if (decodedToken && (decodedToken.exp * 1000 > Date.now())) {
+                // Se o token for válido, loga o usuário automaticamente
+                handleCredentialResponse({ credential: userToken });
+            } else {
+                // Se o token expirou, remove do cache
+                localStorage.removeItem('googleUserToken');
+            }
+        }
+    })();
+
     // O Dashboard só inicializa após o login
     function initializeDashboard() {
-        
         /*
         -- INSTRUÇÃO PARA ATUALIZAÇÃO --
         Sempre que uma alteração funcional for implementada neste script,
         lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-        Exemplo: de "Rev. 4.6" para "Rev. 5.0".
+        Exemplo: de "Rev. 5.1" para "Rev. 5.2".
         */
-        document.addEventListener('DOMContentLoaded', () => {
-             // Esta parte já foi executada, mas mantemos o listener para o código original
-        });
+
+        // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
+        const userInfoCard = document.getElementById('user-info-card');
+        const userInfoText = document.getElementById('user-info-text');
+        const logoutButton = document.getElementById('logout-button');
+
+        if (currentUser.name) {
+            // Adiciona um ícone e o nome do usuário ao card
+            userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
+            userInfoCard.style.display = 'flex';
+        }
+
+        logoutButton.addEventListener('click', logout);
+        // --- FIM DA NOVA LÓGICA DE USUÁRIO ---
+
 
         // O código do dashboard agora é executado dentro desta função
         const themeToggle = document.getElementById('theme-toggle');
@@ -1135,6 +1222,10 @@
             onboardingDashboard.style.display = 'block';
             tabsContainer.style.display = 'flex';
             [selectCS, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+            // Re-disable CS selector if user is not a manager
+            if (!currentUser.isManager) {
+                selectCS.disabled = true;
+            }
             [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
             updateDashboard();
             renderOverdueView();
@@ -1182,7 +1273,7 @@
 
             // Se o usuário não for gestor, seleciona o CS dele automaticamente
             if (!currentUser.isManager) {
-                // Tenta encontrar o nome do CS baseado no email
+                // Tenta encontrar o nome do CS baseado no nome completo do Google
                 const userFirstName = currentUser.name.split(' ')[0];
                 const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
                 if (matchingCS) {
@@ -1805,7 +1896,7 @@
                 const divergenceMarker = document.getElementById('divergence-marker');
                 const divergenceText = document.getElementById('divergence-text');
                 const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-                if (divergentClientCount > 0 && period === 'monthly') {
+                if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
                     divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
                     divergenceMarker.style.display = 'flex';
                 } else {
@@ -2117,7 +2208,7 @@
                 trendHtml = `<span class="trend-indicator ${trendClass}" title="Comparado com ${comparisonValue.toFixed(1)}${unit} no período anterior">${trendIcon} ${trendText}</span>`;
             }
 
-            const trendButtonHtml = `<button class="trend-chart-button" data-metric-id="${metricId}" data-metric-title="${title}" data-metric-type="okr" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>`;
+            const trendButtonHtml = currentUser.isManager ? `<button class="trend-chart-button" data-metric-id="${metricId}" data-metric-title="${title}" data-metric-type="okr" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>` : '';
 
             return `<div class="card"><h3>${title}${trendButtonHtml}</h3><div class="card-content"><div class="metric" data-metric-id="${metricId}" data-metric-title="${title}"><span class="metric-label">${labelText}</span><span class="metric-value">${valueText}${trendHtml}</span></div></div><div class="progress-bar-container" title="Atingimento da meta: ${percentage.toFixed(0)}%"><div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div><span class="progress-percentage">${percentage.toFixed(0)}%</span></div></div>`;
         };
@@ -2127,7 +2218,7 @@
             const percentage = previsto > 0 ? (realizadoNoPrazo / previsto) * 100 : 0;
             
             let metaHtml = '';
-            if(goal !== null) metaHtml = `<div class="metric"><span class="metric-label">Meta Mensal:</span><span class="metric-value">${goal}</span></div>`;
+            if(goal !== null && currentUser.isManager) metaHtml = `<div class="metric"><span class="metric-label">Meta Mensal:</span><span class="metric-value">${goal}</span></div>`;
 
             let overdueHtml = '';
             if (overdueCount > 0) {
@@ -2139,7 +2230,7 @@
                 `;
             }
 
-            const trendButtonHtml = `<button class="trend-chart-button" data-metric-id="${metricIdPrefix}" data-metric-title="${title}" data-metric-type="playbook" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>`;
+            const trendButtonHtml = currentUser.isManager ? `<button class="trend-chart-button" data-metric-id="${metricIdPrefix}" data-metric-title="${title}" data-metric-type="playbook" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>` : '';
 
             return `
                 <div class="card">
@@ -2528,7 +2619,6 @@
             document.body.removeChild(link);
         };
         
-        // INÍCIO FUNÇÃO REFATORADA
         const generateAndDownloadHtmlReport = (csName, reportData, goals) => {
             const selectedMonth = selectMonth.options[selectMonth.selectedIndex].text;
             const selectedYear = selectYear.value;
@@ -2603,7 +2693,6 @@
             link.click();
             document.body.removeChild(link);
         };
-        // FIM FUNÇÃO REFATORADA
         
         document.getElementById('export-csv-button').addEventListener('click', () => {
             if (!rawActivities.length || !rawClients.length) {
@@ -2619,7 +2708,6 @@
                 alert('Por favor, carregue as planilhas antes de exportar.');
                 return;
             }
-            // Chama a função passando os dados do dashboard atual (dataStore)
             generateAndDownloadHtmlReport(selectCS.options[selectCS.selectedIndex].text, dataStore, appGoals);
         });
         
@@ -2632,8 +2720,7 @@
 
         loadGoals();
 
-        // --- INÍCIO LÓGICA PARA EXPORTAÇÃO EM LOTE ---
-
+        // --- LÓGICA PARA EXPORTAÇÃO EM LOTE ---
         const bulkExportButton = document.getElementById('bulk-export-button');
         const bulkExportModal = document.getElementById('bulk-export-modal');
         const csSelectionList = document.getElementById('cs-selection-list');
@@ -2645,9 +2732,8 @@
                 return;
             }
 
-            // Popula a lista de CSs
             const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
-            csSelectionList.innerHTML = ''; // Limpa a lista
+            csSelectionList.innerHTML = '';
             [...csSet].sort().forEach(cs => {
                 csSelectionList.innerHTML += `
                     <div class="cs-item">
@@ -2692,28 +2778,18 @@
         });
 
         bulkExportModal.querySelector('.close-button').addEventListener('click', () => closeModal(bulkExportModal));
-        // --- FIM LÓGICA PARA EXPORTAÇÃO EM LOTE ---
         
         // --- CONTROLE DE ACESSO VISUAL ---
         if (!currentUser.isManager) {
             document.getElementById('settings-button').style.display = 'none';
             document.getElementById('bulk-export-button').style.display = 'none';
-            document.querySelector('[for="select-cs"]').style.pointerEvents = 'none';
-            document.querySelector('[for="select-cs"]').style.opacity = '0.6';
+            const csLabel = document.querySelector('[for="select-cs"]');
+            if(csLabel) {
+                 csLabel.style.pointerEvents = 'none';
+                 csLabel.style.opacity = '0.6';
+            }
         }
-
-    } // Fim da função initializeDashboard
-    </script>
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/6862f529ad6c8f190c6f8c38/1iv18rasf';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
+    } 
+</script>
 </body>
 </html>
