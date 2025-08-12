@@ -983,6 +983,9 @@
 
     function logout() {
         localStorage.removeItem('googleUserToken');
+        localStorage.removeItem('cachedActivities');
+        localStorage.removeItem('cachedClients');
+        localStorage.removeItem('cachedDataTimestamp');
         google.accounts.id.disableAutoSelect();
         location.reload();
     }
@@ -995,7 +998,7 @@
             if (decodedToken && (decodedToken.exp * 1000 > Date.now())) {
                 handleCredentialResponse({ credential: userToken });
             } else {
-                localStorage.removeItem('googleUserToken');
+                localStorage.clear();
             }
         }
     })();
@@ -1006,7 +1009,6 @@
         const userInfoText = document.getElementById('user-info-text');
         const logoutButton = document.getElementById('logout-button');
         const clearDataButton = document.getElementById('limpar-dados-button');
-        // --- NOVO: Referência ao elemento de info da data ---
         const lastUpdateInfo = document.getElementById('last-update-info');
 
         if (currentUser.name) {
@@ -1020,7 +1022,6 @@
             if (confirm('Isso irá remover os dados das planilhas do cache e recarregar a página. Deseja continuar?')) {
                 localStorage.removeItem('cachedActivities');
                 localStorage.removeItem('cachedClients');
-                // --- NOVO: Limpa também o timestamp ---
                 localStorage.removeItem('cachedDataTimestamp');
                 alert('Dados removidos. A página será recarregada.');
                 location.reload();
@@ -1084,7 +1085,6 @@
             return null;
         };
 
-        // --- NOVO: Função para exibir a data de atualização ---
         const displayUpdateTime = (isoString) => {
             if (isoString) {
                 const date = new Date(isoString);
@@ -1103,80 +1103,32 @@
         const selectSegmento = document.getElementById('select-segmento');
         const selectMonth = document.getElementById('select-month');
         const selectYear = document.getElementById('select-year');
-        const selectPeriod = document.getElementById('select-period');
         const statusMessage = document.getElementById('status-message');
-        const dashboard = document.getElementById('dashboard');
         
         let rawActivities = [], rawClients = [];
         
-        const initializeData = () => {
-            const cachedActivities = localStorage.getItem('cachedActivities');
-            const cachedClients = localStorage.getItem('cachedClients');
-            // --- NOVO: Recupera o timestamp ---
-            const cachedTimestamp = localStorage.getItem('cachedDataTimestamp');
+        const processInitialData = () => {
+             statusMessage.textContent = 'Processando dados...';
+            
+            const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
+            
+            rawActivities = rawActivities.map(ativ => {
+                const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
+                const clienteInfo = clienteMap.get(clienteKey) || {};
+                return { 
+                    ...ativ, 
+                    ClienteCompleto: clienteKey, 
+                    Segmento: clienteInfo.Segmento, 
+                    CS: clienteInfo.CS, 
+                    Fase: clienteInfo.Fase,
+                    ISM: clienteInfo.ISM,
+                    PrevisaoConclusao: ativ.PrevisaoConclusao, 
+                    ConcluidaEm: ativ.ConcluidaEm
+                };
+            });
 
-            if (cachedActivities && cachedClients) {
-                console.log("Carregando dados do cache...");
-                try {
-                    rawActivities = JSON.parse(cachedActivities);
-                    rawClients = JSON.parse(cachedClients);
-                    
-                    rawActivities.forEach(ativ => {
-                        ativ.PrevisaoConclusao = ativ.PrevisaoConclusao ? new Date(ativ.PrevisaoConclusao) : null;
-                        ativ.ConcluidaEm = ativ.ConcluidaEm ? new Date(ativ.ConcluidaEm) : null;
-                    });
-                    
-                    statusMessage.style.display = 'none';
-                    // --- NOVO: Exibe a data de atualização do cache ---
-                    displayUpdateTime(cachedTimestamp);
-                    
-                    setTimeout(() => {
-                        processInitialData();
-                    }, 50);
-
-                } catch (e) {
-                    console.error("Erro ao carregar dados do cache:", e);
-                    localStorage.clear(); // Limpa tudo se houver erro
-                    statusMessage.textContent = 'Erro no cache. Por favor, carregue as planilhas para começar.';
-                }
-            } else {
-                statusMessage.textContent = 'Por favor, carregue as duas planilhas para começar.';
-                displayUpdateTime(null); // Esconde a data se não houver cache
-            }
-        };
-
-        const attemptProcess = () => {
-            if (fileAtividadesInput.files[0] && fileClientesInput.files[0]) {
-                statusMessage.textContent = 'Lendo arquivos...';
-                Promise.all([readFile(fileAtividadesInput.files[0]), readFile(fileClientesInput.files[0])])
-                    .then(([atividadesJson, clientesJson]) => { 
-                        rawActivities = atividadesJson; 
-                        rawClients = clientesJson;
-                        // --- NOVO: Salva os dados e o timestamp atual no localStorage ---
-                        const currentTimestamp = new Date().toISOString();
-                        try {
-                            localStorage.setItem('cachedActivities', JSON.stringify(rawActivities));
-                            localStorage.setItem('cachedClients', JSON.stringify(rawClients));
-                            localStorage.setItem('cachedDataTimestamp', currentTimestamp);
-                            console.log("Dados salvos no cache.");
-                        } catch (e) {
-                            console.error("Erro ao salvar no cache (limite de tamanho pode ter sido excedido):", e);
-                            alert("Não foi possível salvar os dados no cache. O arquivo pode ser muito grande.");
-                        }
-                        
-                        statusMessage.style.display = 'none';
-                        // --- NOVO: Exibe a data do novo carregamento ---
-                        displayUpdateTime(currentTimestamp);
-
-                        setTimeout(() => {
-                            processInitialData();
-                        }, 50);
-                    })
-                    .catch(err => { 
-                        statusMessage.textContent = 'Erro ao ler. Verifique os arquivos e o console (F12) para mais detalhes.'; 
-                        console.error(err); 
-                    });
-            }
+            populateFilters();
+            // ... resto da sua lógica de renderização que depende dos filtros populados
         };
         
         const autoSelectSegment = (clients) => {
@@ -1218,24 +1170,30 @@
                 selectCS.appendChild(option); 
             });
 
+            const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
+            selectSegmento.innerHTML = '';
+            segmentosPredefinidos.forEach(seg => { 
+                const option = document.createElement('option'); 
+                option.value = seg; 
+                option.textContent = seg; 
+                selectSegmento.appendChild(option); 
+            });
+
             if (!currentUser.isManager) {
                 const userFirstName = currentUser.name.split(' ')[0];
                 const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
                 if (matchingCS) {
                     selectCS.value = matchingCS;
-                    // --- CORREÇÃO: Chama a função de selecionar segmento aqui ---
                     const csClients = rawClients.filter(c => c.CS?.trim() === matchingCS);
-                    autoSelectSegment(csClients);
+                    autoSelectSegment(csClients); // Correção aplicada aqui
                 }
                 selectCS.disabled = true;
+            } else {
+                 // Para gestores, seleciona o segmento do primeiro CS da lista (ou geral)
+                const firstCs = selectCS.value === 'Todos' ? rawClients : rawClients.filter(c => c.CS === sortedCS[0]);
+                autoSelectSegment(firstCs);
             }
             
-            // ... (o restante da função populateFilters e todo o resto do seu código permanece igual) ...
-            // O código abaixo é apenas o final da função para dar contexto.
-            const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
-            selectSegmento.innerHTML = '';
-            segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
-
             const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
             selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
             
@@ -1251,7 +1209,100 @@
                 selectYear.value = years[0];
             }
         };
-        
+
+        const readFile = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = event.target.result;
+                    const fileName = file.name.toLowerCase();
+                    let workbook;
+                    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                        workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    } else {
+                        const transpilePipeToCommaCSV = (pipeText) => {
+                            let inQuotes = false; let newCsvText = '';
+                            for (let i = 0; i < pipeText.length; i++) {
+                                const char = pipeText[i]; if (char === '"') inQuotes = !inQuotes;
+                                newCsvText += (char === '|' && !inQuotes) ? ',' : char;
+                            } return newCsvText;
+                        };
+                        const standardCsvText = transpilePipeToCommaCSV(data);
+                        workbook = XLSX.read(standardCsvText, { type: 'string' });
+                    }
+                    const sheetName = workbook.SheetNames[0];
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", cellDates: true });
+                    resolve(jsonData);
+                } catch (e) { reject(e); }
+            };
+            reader.onerror = (error) => reject(error);
+            if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+                 reader.readAsArrayBuffer(file);
+            } else {
+                 reader.readAsText(file, 'UTF-8'); 
+            }
+        });
+
+        const attemptProcess = () => {
+            if (fileAtividadesInput.files[0] && fileClientesInput.files[0]) {
+                statusMessage.style.display = 'block';
+                statusMessage.textContent = 'Lendo arquivos...';
+                Promise.all([readFile(fileAtividadesInput.files[0]), readFile(fileClientesInput.files[0])])
+                    .then(([atividadesJson, clientesJson]) => { 
+                        rawActivities = atividadesJson; 
+                        rawClients = clientesJson;
+                        const currentTimestamp = new Date().toISOString();
+                        try {
+                            localStorage.setItem('cachedActivities', JSON.stringify(rawActivities));
+                            localStorage.setItem('cachedClients', JSON.stringify(rawClients));
+                            localStorage.setItem('cachedDataTimestamp', currentTimestamp);
+                        } catch (e) {
+                            console.error("Erro ao salvar no cache:", e);
+                            alert("Não foi possível salvar os dados no cache. O arquivo pode ser muito grande.");
+                        }
+                        
+                        statusMessage.style.display = 'none';
+                        displayUpdateTime(currentTimestamp);
+
+                        setTimeout(() => processInitialData(), 50);
+                    })
+                    .catch(err => { 
+                        statusMessage.textContent = 'Erro ao ler. Verifique os arquivos.'; 
+                        console.error(err); 
+                    });
+            }
+        };
+
+        const initializeData = () => {
+            const cachedActivities = localStorage.getItem('cachedActivities');
+            const cachedClients = localStorage.getItem('cachedClients');
+            const cachedTimestamp = localStorage.getItem('cachedDataTimestamp');
+
+            if (cachedActivities && cachedClients) {
+                try {
+                    rawActivities = JSON.parse(cachedActivities);
+                    rawClients = JSON.parse(cachedClients);
+                    
+                    rawActivities.forEach(ativ => {
+                        ativ.PrevisaoConclusao = ativ.PrevisaoConclusao ? new Date(ativ.PrevisaoConclusao) : null;
+                        ativ.ConcluidaEm = ativ.ConcluidaEm ? new Date(ativ.ConcluidaEm) : null;
+                    });
+                    
+                    statusMessage.style.display = 'none';
+                    displayUpdateTime(cachedTimestamp);
+                    
+                    setTimeout(() => processInitialData(), 50);
+
+                } catch (e) {
+                    localStorage.clear();
+                    statusMessage.textContent = 'Erro no cache. Por favor, carregue as planilhas.';
+                }
+            } else {
+                statusMessage.textContent = 'Por favor, carregue as duas planilhas para começar.';
+                displayUpdateTime(null);
+            }
+        };
+
         fileAtividadesInput.addEventListener('change', attemptProcess);
         fileClientesInput.addEventListener('change', attemptProcess);
 
