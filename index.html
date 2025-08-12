@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de OKRs - CS</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ESTILOS ORIGINAIS E NOVOS */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        :root {
+            --primary-color: #007BFF; --primary-hover-color: #0056b3; --secondary-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107; --bg-color: #121828; --bg-gradient: linear-gradient(180deg, #1a2238 0%, #121828 30%); --card-bg-color: #1a2238; --text-color: #F0F2F5; --text-light-color: #a9b3c1; --border-color: #3a476a; --shadow-color: rgba(0, 0, 0, 0.2); --font-family: 'Inter', sans-serif; --border-radius-lg: 16px; --border-radius-md: 12px; --border-radius-sm: 8px;
+        }
+        body.light-theme {
+            --primary-color: #007BFF; --primary-hover-color: #0069d9; --bg-color: #f4f7fc; --bg-gradient: linear-gradient(180deg, #ffffff 0%, #f4f7fc 40%); --card-bg-color: #ffffff; --text-color: #2c3e50; --text-light-color: #57606A; --border-color: #e3e8f0; --shadow-color: rgba(99, 112, 134, 0.15);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: var(--font-family); background: var(--bg-gradient) no-repeat; background-color: var(--bg-color); margin: 0; color: var(--text-color); line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
+        
+        /* --- ESTILOS DA TELA DE LOGIN --- */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; padding: 20px;
+        }
+        #login-box {
+            background-color: var(--card-bg-color); padding: 40px 50px; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); box-shadow: 0 10px 30px var(--shadow-color);
+        }
+        #login-box h1 { font-size: 2rem; margin-top: 0; }
+        #login-box p { font-size: 1.1rem; color: var(--text-light-color); margin-bottom: 30px; }
+
+        /* --- ESTILOS DO APP PRINCIPAL --- */
+        #app-container { display: none; padding: 24px; }
+        .container { max-width: 1800px; margin: auto; padding: 0 20px; }
+        header { text-align: center; margin-bottom: 40px; position: relative; }
+        header h1 { font-size: 2.8rem; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -1px; }
+        header p { font-size: 1.2rem; color: var(--text-light-color); margin: 0; }
+        .header-actions { position: absolute; top: 0; right: 0; display: flex; align-items: center; gap: 15px; background-color: var(--card-bg-color); padding: 8px 12px; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); }
+        .header-actions button { background: none; border: none; color: var(--text-light-color); font-size: 1.5rem; cursor: pointer; transition: color 0.3s ease, transform 0.3s ease; }
+        #logout-button:hover { color: var(--danger-color); }
+        .user-info { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+        .user-info img { width: 32px; height: 32px; border-radius: 50%; }
+        
+        .controls { display: flex; gap: 20px; padding: 20px; background-color: var(--card-bg-color); border-radius: var(--border-radius-lg); margin-bottom: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-end; border: 1px solid var(--border-color); box-shadow: 0 4px 15px var(--shadow-color); }
+        .control-group { display: flex; flex-direction: column; }
+        .control-group label { font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; }
+        .control-group input[type="file"], .control-group select { padding: 12px 15px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); min-width: 180px; background-color: var(--bg-color); color: var(--text-color); font-size: 1rem; }
+        .control-group input[type="file"] { cursor: pointer; }
+        
+        .tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
+        .tab-button { padding: 12px 25px; cursor: pointer; background-color: transparent; border: none; border-bottom: 4px solid transparent; font-size: 1.1rem; font-weight: 600; color: var(--text-light-color); transition: color 0.3s ease, border-color 0.3s ease; position: relative; top: 2px; }
+        .tab-button:hover { color: var(--text-color); }
+        .tab-button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .metric-group { margin-bottom: 50px; }
+        .group-title { font-size: 1.8rem; font-weight: 700; margin: 0 0 25px 0; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; }
+        .group-title::before { content: ''; display: inline-block; width: 5px; height: 28px; background-color: var(--primary-color); margin-right: 15px; border-radius: 5px; }
+        .group-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 25px; }
+        .card { background-color: var(--card-bg-color); border-radius: var(--border-radius-lg); padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; box-shadow: 0 4px 15px var(--shadow-color); }
+        .card h3 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; }
+        .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1rem; padding: 12px 8px; border-radius: var(--border-radius-sm); }
+        .metric-label { color: var(--text-light-color); font-weight: 500; }
+        .metric-value { font-weight: 700; font-size: 1.6rem; }
+        .metric-value.success { color: var(--secondary-color); }
+        .metric-value.danger { color: var(--danger-color); }
+        .metric-value .sub-metric { font-size: 0.9rem; font-weight: 500; color: var(--text-light-color); margin-left: 8px; }
+        .loader { text-align: center; padding: 60px; font-weight: 600; grid-column: 1 / -1; background-color: var(--card-bg-color); border: 1px dashed var(--border-color); border-radius: var(--border-radius-lg); font-size: 1.2rem; }
+        .data-table-wrapper { background-color: var(--card-bg-color); border-radius: var(--border-radius-lg); padding: 25px; border: 1px solid var(--border-color); margin-bottom: 30px; box-shadow: 0 4px 15px var(--shadow-color); }
+        .data-table-container { max-height: 500px; overflow-y: auto; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        
+        /* --- ESTILOS PARA "MEU DIA" --- */
+        #meu-dia-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        .task-list-card {
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius-lg);
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+        .task-list-card h3 { margin-top: 0; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .task-list-card ul { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
+        .task-list-card li { padding: 12px 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .task-list-card li:last-child { border-bottom: none; }
+        .task-list-card .client-name { font-weight: 600; }
+        .task-list-card .activity-name { color: var(--text-light-color); font-size: 0.9rem; }
+        .task-list-card .due-date { font-weight: bold; flex-shrink: 0; }
+        .task-list-card .due-date.is-overdue { color: var(--danger-color); }
+        .task-list-card .due-date.is-today { color: var(--warning-color); }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div id="login-box">
+            <h1>Dashboard de OKRs</h1>
+            <p>Faça login com sua conta Google para continuar.</p>
+            <div id="g_id_onload"
+                 data-client_id="232267534625-oju4j8ob02rn6tim24tcdas26c5rh3j4.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-size="large"
+                 data-logo_alignment="left">
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <div class="container">
+            <header>
+                <h1 id="dashboard-title">Meu Desempenho</h1>
+                <p id="dashboard-subtitle">Avaliação de Resultados e Performance</p>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <img id="user-picture" src="" alt="User"/>
+                        <span id="user-name"></span>
+                    </div>
+                    <button id="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </header>
+
+            <section class="controls">
+                <div class="control-group"><label for="file-atividades"><i class="fas fa-tasks"></i> 1. Planilha de Atividades</label><input type="file" id="file-atividades" accept=".csv, .xlsx, .txt"></div>
+                <div class="control-group"><label for="file-clientes"><i class="fas fa-users"></i> 2. Planilha de Clientes</label><input type="file" id="file-clientes" accept=".csv, .xlsx, .txt"></div>
+                <div class="control-group"><label for="select-year"><i class="fas fa-calendar-week"></i> Ano</label><select id="select-year" disabled></select></div>
+                <div class="control-group"><label for="select-month"><i class="fas fa-calendar-alt"></i> Mês</label><select id="select-month" disabled></select></div>
+                <div class="control-group"><label for="select-cs"><i class="fas fa-user-tie"></i> CS</label><select id="select-cs" disabled><option>Aguardando...</option></select></div>
+            </section>
+            
+            <div id="status-message" class="loader">Olá! Por favor, carregue as planilhas de Atividades e Clientes para começar.</div>
+            
+            <div class="tabs" style="display: none;">
+                <button class="tab-button active" data-tab="meu-dia-view"><i class="fas fa-calendar-day"></i> Meu Dia</button>
+                <button class="tab-button" data-tab="dashboard-view"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+                <button class="tab-button" data-tab="data-view"><i class="fas fa-table"></i> Dados Carregados</button>
+            </div>
+
+            <main id="main-content">
+                <div id="meu-dia-view" class="tab-content active">
+                    <div class="metric-group">
+                        <h2 class="group-title">Plano de Ação Diário</h2>
+                        <div id="meu-dia-grid-container" class="meu-dia-grid">
+                           <div class="loader">Carregue as planilhas para ver seu plano de ação.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dashboard-view" class="tab-content">
+                    <div id="dashboard" style="display: none;">
+                        <div class="metric-group">
+                            <h2 class="group-title">Indicadores Gerais da Carteira</h2>
+                            <div class="group-content" id="general-indicators-grid"></div>
+                        </div>
+                        <div class="metric-group">
+                            <h2 class="group-title">Acompanhamento de Playbooks</h2>
+                            <div class="group-content" id="playbooks-grid"></div>
+                        </div>
+                         <div class="metric-group">
+                            <h2 class="group-title" id="okr-title-header">OKRs de Engajamento e Eventos</h2>
+                            <div class="group-content" id="okr-grid-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="data-view" class="tab-content">
+                    <div class="data-table-wrapper">
+                        <h3><i class="fas fa-clipboard-list"></i> Dados da Planilha de Atividades (Sua Visão)</h3>
+                        <div id="atividades-table" class="data-table-container"></div>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <h3><i class="fas fa-address-book"></i> Dados da Planilha de Clientes (Sua Visão)</h3>
+                        <div id="clientes-table" class="data-table-container"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script>
+// =================================================================================
+// 1. CONFIGURAÇÕES
+// =================================================================================
+// Insira o seu Client ID do Google Auth que você já possui.
+const GOOGLE_CLIENT_ID = "232267534625-oju4j8ob02rn6tim24tcdas26c5rh3j4.apps.googleusercontent.com"; 
+
+// Adicione os e-mails dos gestores que poderão ver os dados de toda a equipe.
+const MANAGER_EMAILS = ["jade@ska.com.br", "julia.rail@ska.com.br"];
+
+// =================================================================================
+// 2. LÓGICA DA APLICAÇÃO
+// =================================================================================
+let currentUser = null;
+let rawActivities = [], rawClients = [];
+let dataStore = {};
+
+// --- LÓGICA DE AUTENTICAÇÃO E CONTROLE DE INTERFACE ---
+function handleCredentialResponse(response) {
+    const base64Url = response.credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    const userData = JSON.parse(jsonPayload);
+
+    currentUser = {
+        name: userData.name,
+        email: userData.email,
+        picture: userData.picture,
+        isManager: MANAGER_EMAILS.includes(userData.email)
+    };
+    
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    document.getElementById('user-name').textContent = currentUser.name;
+    document.getElementById('user-picture').src = currentUser.picture;
+    
+    if (currentUser.isManager) {
+        document.getElementById('dashboard-title').textContent = "Dashboard de Gestão";
+        document.getElementById('dashboard-subtitle').textContent = "Análise de Performance da Equipe";
+    }
+}
+
+function logout() {
+    google.accounts.id.disableAutoSelect();
+    currentUser = null;
+    location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- INICIALIZAÇÃO E ELEMENTOS GERAIS ---
+    const fileAtividadesInput = document.getElementById('file-atividades');
+    const fileClientesInput = document.getElementById('file-clientes');
+    const selectCS = document.getElementById('select-cs');
+    const selectYear = document.getElementById('select-year');
+    const selectMonth = document.getElementById('select-month');
+    const selectSegmento = document.getElementById('select-segmento'); // Originalmente faltava
+    const statusMessage = document.getElementById('status-message');
+    const tabsContainer = document.querySelector('.tabs');
+    const dashboard = document.getElementById('dashboard');
+
+    let atividadesFile, clientesFile;
+
+    // --- FLUXO DE CARREGAMENTO E PROCESSAMENTO DE DADOS ---
+    const attemptProcess = () => {
+        if (atividadesFile && clientesFile) {
+            statusMessage.textContent = 'Lendo arquivos...';
+            Promise.all([readFile(atividadesFile), readFile(clientesFile)])
+                .then(([atividadesJson, clientesJson]) => {
+                    rawActivities = atividadesJson;
+                    rawClients = clientesJson;
+                    statusMessage.textContent = 'Arquivos lidos. Processando seus dados...';
+                    setTimeout(() => processInitialData(), 50);
+                })
+                .catch(err => {
+                    statusMessage.textContent = 'Erro ao ler os arquivos. Verifique o formato.';
+                    console.error(err);
+                });
+        }
+    };
+
+    const processInitialData = () => {
+        const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
+        rawActivities = rawActivities.map(ativ => {
+            const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
+            const clienteInfo = clienteMap.get(clienteKey) || {};
+            return { 
+                ...ativ, 
+                ClienteCompleto: clienteKey,
+                CS: clienteInfo.CS,
+                Segmento: clienteInfo.Segmento,
+                Fase: clienteInfo.Fase,
+                ISM: clienteInfo.ISM,
+                PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
+                ConcluidaEm: parseDate(ativ['Concluída em']) 
+            };
+        });
+
+        populateFilters();
+        applyUserFilterAndLoadDashboard();
+        
+        statusMessage.style.display = 'none';
+        tabsContainer.style.display = 'flex';
+        dashboard.style.display = 'block';
+    };
+
+    const populateFilters = () => {
+        const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+        selectCS.innerHTML = '';
+
+        if (currentUser.isManager) {
+            selectCS.innerHTML = '<option value="Todos">Todos os CS</option>';
+        }
+        
+        [...csSet].sort().forEach(cs => {
+            selectCS.innerHTML += `<option value="${cs}">${cs}</option>`;
+        });
+
+        const allDates = rawActivities.map(a => a.PrevisaoConclusao).filter(Boolean);
+        const years = [...new Set(allDates.map(d => d.getFullYear()))].sort((a,b) => b-a);
+        selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+        
+        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+        
+        const today = new Date();
+        selectMonth.value = today.getMonth();
+        if (years.includes(today.getFullYear())) {
+            selectYear.value = today.getFullYear();
+        }
+
+        [selectYear, selectMonth].forEach(el => el.disabled = false);
+    };
+
+    const applyUserFilterAndLoadDashboard = () => {
+        if (!currentUser.isManager) {
+            const userCS = [...selectCS.options].find(opt => normalizeText(opt.value) === normalizeText(currentUser.name));
+            if (userCS) {
+                selectCS.value = userCS.value;
+                selectCS.disabled = true;
+            } else {
+                statusMessage.innerHTML = `Olá, ${currentUser.name}. Seu nome não foi encontrado como um CS responsável nas planilhas. Por favor, verifique os dados.`;
+                statusMessage.style.display = 'block';
+                tabsContainer.style.display = 'none';
+                return;
+            }
+        } else {
+            selectCS.disabled = false;
+        }
+        updateDashboard();
+    };
+    
+    // --- FUNÇÕES DE ATUALIZAÇÃO E RENDERIZAÇÃO ---
+    const updateDashboard = () => {
+        if(rawActivities.length === 0 || rawClients.length === 0) return;
+        
+        const selectedCS = selectCS.value;
+        const mesSelecionado = parseInt(selectMonth.value, 10);
+        const anoSelecionado = parseInt(selectYear.value, 10);
+        
+        // Dados da equipe para comparação
+        const teamData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, rawClients, 'Todos');
+        
+        // Dados do usuário ou da equipe (baseado no filtro)
+        const filteredClients = (selectedCS === 'Todos') ? rawClients : rawClients.filter(d => d.CS?.trim() === selectedCS);
+        const userOrTeamActivities = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => a.CS?.trim() === selectedCS);
+        
+        dataStore = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, selectedCS);
+        
+        renderOKRs(dataStore, teamData);
+        renderMeuDiaTab(rawActivities, currentUser.name);
+        renderDataTables(userOrTeamActivities, filteredClients);
+    };
+
+    const renderMeuDiaTab = (allActivities, csName) => {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        const myActivities = allActivities.filter(a => normalizeText(a.CS) === normalizeText(csName) && a.PrevisaoConclusao && !a.ConcluidaEm);
+
+        const overdue = myActivities.filter(a => a.PrevisaoConclusao < today);
+        const dueToday = myActivities.filter(a => a.PrevisaoConclusao.getTime() === today.getTime());
+
+        const myClientNames = new Set(rawClients.filter(c => normalizeText(c.CS) === normalizeText(csName)).map(c => (c.Cliente || '').toLowerCase().trim()));
+        const lastContactMap = new Map();
+
+        allActivities.forEach(a => {
+            const clientKey = a.ClienteCompleto;
+            if (myClientNames.has(clientKey) && a.ConcluidaEm) {
+                if (!lastContactMap.has(clientKey) || a.ConcluidaEm > lastContactMap.get(clientKey)) {
+                    lastContactMap.set(clientKey, a.ConcluidaEm);
+                }
+            }
+        });
+
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        let noRecentContact = [];
+        myClientNames.forEach(clientKey => {
+            const lastContact = lastContactMap.get(clientKey);
+            if (!lastContact || lastContact < thirtyDaysAgo) {
+                noRecentContact.push({cliente: clientKey, lastContact: lastContact});
+            }
+        });
+        noRecentContact = noRecentContact.sort((a,b) => (a.lastContact || 0) - (b.lastContact || 0));
+
+        const container = document.getElementById('meu-dia-grid-container');
+        container.innerHTML = `
+            <div class="task-list-card">
+                <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i> Atrasadas (${overdue.length})</h3>
+                <ul>${overdue.map(a => `<li><div><div class="client-name">${a.Cliente}</div><div class="activity-name">${a.Atividade}</div></div><div class="due-date is-overdue">${formatDate(a.PrevisaoConclusao)}</div></li>`).join('') || '<li>Nenhuma atividade atrasada!</li>'}</ul>
+            </div>
+            <div class="task-list-card">
+                <h3><i class="fas fa-calendar-check" style="color: var(--warning-color);"></i> Para Hoje (${dueToday.length})</h3>
+                <ul>${dueToday.map(a => `<li><div><div class="client-name">${a.Cliente}</div><div class="activity-name">${a.Atividade}</div></div><div class="due-date is-today">${formatDate(a.PrevisaoConclusao)}</div></li>`).join('') || '<li>Nenhuma atividade para hoje.</li>'}</ul>
+            </div>
+            <div class="task-list-card">
+                <h3><i class="fas fa-phone-slash" style="color: var(--primary-color);"></i> Clientes sem Contato Recente (${noRecentContact.length})</h3>
+                <ul>${noRecentContact.map(c => `<li><div class="client-name" style="text-transform: capitalize;">${c.cliente}</div><div class="activity-name">${c.lastContact ? `Último: ${formatDate(c.lastContact)}` : 'Nenhum contato'}</div></li>`).join('') || '<li>Todos os clientes contatados!</li>'}</ul>
+            </div>
+        `;
+    };
+
+    const renderOKRs = (userData, teamData) => {
+        const generalGrid = document.getElementById('general-indicators-grid');
+        const playbookGrid = document.getElementById('playbooks-grid');
+        const okrGrid = document.getElementById('okr-grid-container');
+        
+        const totalClientes = userData['total-clientes-unicos-cs'] || 0;
+        const coberturaUser = userData['cob-carteira']?.length || 0;
+        const coberturaPerc = totalClientes > 0 ? (coberturaUser / totalClientes * 100) : 0;
+        const coberturaTeam = (teamData['cob-carteira']?.length / (teamData['total-clientes-unicos-cs'] || 1)) * 100;
+
+        generalGrid.innerHTML = `
+            <div class="card"><h3>Visão Geral da Sua Carteira</h3>
+                <div class="metric"><span class="metric-label">Total de Clientes:</span><span class="metric-value">${totalClientes}</span></div>
+                <div class="metric"><span class="metric-label">Clientes Contatados por Você:</span><span class="metric-value">${coberturaUser}</span></div>
+                <div class="metric" title="Sua cobertura / Média da equipe"><span class="metric-label">Sua Cobertura de Carteira:</span><span class="metric-value">${coberturaPerc.toFixed(1)}% <span class="sub-metric">/ ${coberturaTeam.toFixed(1)}%</span></span></div>
+            </div>`;
+        
+        playbookGrid.innerHTML = `
+            <div class="card"><h3>Seus Playbooks Realizados</h3>
+                 <div class="metric"><span class="metric-label">Planos de Ação:</span><span class="metric-value">${userData['plano-realizado']?.length || 0}</span></div>
+                 <div class="metric"><span class="metric-label">Reuniões de QBR:</span><span class="metric-value">${userData['reunioes-qbr-realizado']?.length || 0}</span></div>
+            </div>`;
+        okrGrid.innerHTML = `<div class="loader">OKRs específicos do segmento serão exibidos aqui.</div>`;
+    };
+
+    const renderDataTables = (activities, clients) => {
+        document.getElementById('atividades-table').innerHTML = createHtmlTable(activities.slice(0, 100));
+        document.getElementById('clientes-table').innerHTML = createHtmlTable(clients.slice(0, 100));
+    };
+
+    // --- FUNÇÕES UTILITÁRIAS ---
+    const normalizeText = (str = '') => String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const formatDate = (date) => { if (!(date instanceof Date) || isNaN(date)) return ''; return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'}); };
+    const parseDate = (dateInput) => {
+        if (!dateInput) return null;
+        if (dateInput instanceof Date) return dateInput;
+        const dateStr = String(dateInput).trim();
+        const parts = dateStr.split(/[/.-]/);
+        if (parts.length !== 3) return null;
+        let day, month, year;
+        if (parts[2]?.length === 4) { [day, month, year] = parts; } 
+        else if (parts[0]?.length === 4) { [year, month, day] = parts; }
+        else { return null; }
+        const date = new Date(Date.UTC(year, parseInt(month) - 1, day));
+        return isNaN(date) ? null : date;
+    };
+    
+    const readFile = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = event.target.result;
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheetName = workbook.SheetNames[0];
+                resolve(XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" }));
+            } catch (e) { reject(e); }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+    });
+
+    const calculateMetricsForPeriod = (month, year, allActivities, filteredClients, selectedCS) => {
+        const metrics = {};
+        const activitiesInPeriod = allActivities.filter(a => {
+            const concluded = a.ConcluidaEm;
+            return concluded && concluded.getUTCMonth() === month && concluded.getUTCFullYear() === year;
+        });
+
+        const csActivities = selectedCS === 'Todos' ? activitiesInPeriod : activitiesInPeriod.filter(a => a.CS === selectedCS);
+
+        metrics['total-clientes-unicos-cs'] = filteredClients.length;
+        metrics['cob-carteira'] = [...new Set(csActivities.map(a => a.ClienteCompleto))];
+        metrics['reunioes-qbr-realizado'] = csActivities.filter(a => a.Atividade && normalizeText(a.Atividade).includes('qbr'));
+        metrics['plano-realizado'] = csActivities.filter(a => a.Atividade && normalizeText(a.Playbook || '').includes('plano de acao'));
+        
+        return metrics;
+    };
+    
+    const createHtmlTable = (data) => {
+        if (!data || data.length === 0) return '<p style="text-align:center; padding: 20px;">Nenhum dado para exibir.</p>';
+        const headers = Object.keys(data[0]);
+        const headerHtml = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+        const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => {
+            const cellValue = row[h];
+            let displayValue = '';
+            if (cellValue instanceof Date) displayValue = formatDate(cellValue);
+            else if (cellValue !== null && cellValue !== undefined) displayValue = cellValue;
+            return `<td>${displayValue}</td>`;
+        }).join('')}</tr>`).join('')}</tbody>`;
+        return `<table class="data-table">${headerHtml}${bodyHtml}</table>`;
+    };
+
+    // --- EVENT LISTENERS ---
+    fileAtividadesInput.addEventListener('change', (e) => { atividadesFile = e.target.files[0]; attemptProcess(); });
+    fileClientesInput.addEventListener('change', (e) => { clientesFile = e.target.files[0]; attemptProcess(); });
+    document.getElementById('logout-button').addEventListener('click', logout);
+    
+    tabsContainer.addEventListener('click', (e) => {
+        if (e.target.matches('.tab-button')) {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(e.target.dataset.tab).classList.add('active');
+        }
+    });
+
+    [selectYear, selectMonth, selectCS].forEach(el => {
+        el.addEventListener('change', updateDashboard);
+    });
+});
+</script>
+
+</body>
+</html>
