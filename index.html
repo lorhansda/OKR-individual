@@ -1527,7 +1527,7 @@ selectISM.appendChild(option);
 };
 
 const populateFilters = () => {
-    const csSet = new Set(rawClients.map(d => d.CS?.trim()).filter(Boolean)); // Adicionado .trim() para segurança
+    const csSet = new Set(rawClients.map(d => d.CS?.trim()).filter(Boolean));
     const selectSquad = document.getElementById('select-squad');
     selectCS.innerHTML = '';
 
@@ -1543,19 +1543,38 @@ const populateFilters = () => {
         selectCS.appendChild(option);
     });
 
-    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA REFINADA E CORRIGIDA ###
+    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA FINAL BASEADA NO TEMPLATE DE E-MAIL ###
     if (!currentUser.isManager) {
         let bestMatch = null;
         const normalizedEmailUser = normalizeText(currentUser.email.split('@')[0]);
 
-        // Prioridade 1: Verifica se o e-mail do usuário COMEÇA com o nome de um CS.
-        // Ex: "elianeokr" começa com "eliane". Esta é a verificação mais confiável.
-        const emailMatch = sortedCS.find(cs => normalizedEmailUser.startsWith(normalizeText(cs)));
+        // 1. Extrai o identificador do e-mail com base no delimitador "okr"
+        const okrIndex = normalizedEmailUser.indexOf('okr');
+        
+        if (okrIndex !== -1) {
+            const emailIdentifier = normalizedEmailUser.substring(0, okrIndex);
 
-        if (emailMatch) {
-            bestMatch = emailMatch;
+            // 2. Ordena a lista de CSs pelo comprimento do nome, do maior para o menor.
+            // Isso garante que "Julia Haill" seja verificado antes de "Julia".
+            const csListSortedByLength = [...sortedCS].sort((a, b) => b.length - a.length);
+
+            // 3. Encontra a correspondência exata entre o identificador do e-mail e o nome do CS (sem espaços)
+            for (const cs of csListSortedByLength) {
+                const normalizedCSIdentifier = normalizeText(cs).replace(/\s/g, '');
+                if (emailIdentifier === normalizedCSIdentifier) {
+                    bestMatch = cs;
+                    break; // Encontrou a correspondência exata e mais específica, então para.
+                }
+            }
+        }
+        
+        // Aplica a correspondência encontrada
+        if (bestMatch) {
+            selectCS.value = bestMatch;
+            console.log(`CS auto-selecionado via template de e-mail: ${bestMatch}`);
         } else {
-            // Prioridade 2 (Fallback): Se o e-mail não corresponder, tenta usar o nome da conta Google.
+            // Se a lógica do template falhar, executa uma última tentativa com o nome
+            console.warn(`Não foi possível identificar o CS pelo template de e-mail (${currentUser.email}). Tentando pelo nome de usuário...`);
             const nameParts = currentUser.name.split(' ').map(part => normalizeText(part));
             for (const part of nameParts) {
                 const nameMatch = sortedCS.find(cs => normalizeText(cs) === part);
@@ -1564,14 +1583,8 @@ const populateFilters = () => {
                     break;
                 }
             }
-        }
-
-        // Aplica a correspondência encontrada
-        if (bestMatch) {
-            selectCS.value = bestMatch;
-            console.log(`CS auto-selecionado: ${bestMatch} para o usuário ${currentUser.name}`);
-        } else {
-            console.warn(`Nenhum CS correspondente encontrado para ${currentUser.name} (${currentUser.email}).`);
+            if(bestMatch) selectCS.value = bestMatch;
+            else console.error(`Falha total ao identificar o CS para o usuário ${currentUser.name}. Verifique o nome na planilha e o e-mail.`);
         }
 
         selectCS.disabled = true;
