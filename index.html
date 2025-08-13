@@ -11,11 +11,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 /*
-       -- REESTILIZAÇÃO VISUAL COMPLETA --
-       O código CSS abaixo foi totalmente reescrito para criar uma interface mais moderna,
-       atraente e dinâmica, conforme solicitado. Nenhuma funcionalidade ou ID utilizado
-       pelo JavaScript foi alterado. O foco foi em layout, cores, tipografia e interatividade.
-       */
+       -- REESTILIZAÇÃO VISUAL COMPLETA --
+       O código CSS abaixo foi totalmente reescrito para criar uma interface mais moderna,
+       atraente e dinâmica, conforme solicitado. Nenhuma funcionalidade ou ID utilizado
+       pelo JavaScript foi alterado. O foco foi em layout, cores, tipografia e interatividade.
+       */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -267,7 +267,7 @@ outline: none;
 border-color: var(--primary-color);
 box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 30%, transparent);
 }
-body.light-theme .control-group input[type="file"], 
+body.light-theme .control-group input[type="file"], 
 body.light-theme .control-group select { background-color: #FFFFFF; }
 
 .tabs {
@@ -603,8 +603,8 @@ font-size: 0.9rem; font-weight: 500;
 color: var(--warning-color);
 }
 .overdue-metric .metric-label .fa-history,
-.overdue-metric .metric-label .fa-exclamation-triangle { 
-margin-right: 6px; 
+.overdue-metric .metric-label .fa-exclamation-triangle { 
+margin-right: 6px; 
 }
 .overdue-metric .metric-value {
 font-size: 1.2rem; color: var(--warning-color);
@@ -742,7 +742,10 @@ data-logo_alignment="left">
 <div class="control-group"><label for="select-year"><i class="fas fa-calendar-week"></i> Ano</label><select id="select-year"></select></div>
 <div class="control-group"><label for="select-month"><i class="fas fa-calendar-alt"></i> Mês</label><select id="select-month"></select></div>
 <div class="control-group"><label for="select-cs"><i class="fas fa-user-tie"></i> CS</label><select id="select-cs" disabled><option>Aguardando...</option></select></div>
-<div class="control-group"><label for="select-squad"><i class="fas fa-users"></i> Squad</label><select id="select-squad" disabled><option>Aguardando...</option></select></div>
+<div id="squad-filter-group" class="control-group">
+    <label for="select-squad"><i class="fas fa-users"></i> Squad</label>
+    <select id="select-squad" disabled><option>Aguardando...</option></select>
+</div>
 <div class="control-group"><label for="select-segmento"><i class="fas fa-chart-pie"></i> Segmento</label><select id="select-segmento" disabled><option>Aguardando...</option></select></div>
 <div class="control-group">
 <label for="select-comparison"><i class="fas fa-exchange-alt"></i> Comparar com</label>
@@ -997,11 +1000,11 @@ localStorage.removeItem('googleUserToken');
 // O Dashboard só inicializa após o login
 function initializeDashboard() {
 /*
-       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-       Sempre que uma alteração funcional for implementada neste script,
-       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-       */
+       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
+       Sempre que uma alteração funcional for implementada neste script,
+       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
+       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
+       */
 
 // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
 const userInfoCard = document.getElementById('user-info-card');
@@ -1107,7 +1110,7 @@ let rawActivities = [], rawClients = [];
 let dataStore = {};
 let onboardingDataStore = {};
 let appGoals = {};
-let csToSquadMap = new Map(); // ADICIONE ESTA LINHA
+let csToSquadMap = new Map();
 const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
 
 const loadGoals = () => {
@@ -1196,6 +1199,39 @@ reader.readAsText(file, 'UTF-8');
 }
 });
 
+const buildCsToSquadMap = () => {
+    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
+
+    allCSs.forEach(csName => {
+        const clientsOfCS = rawClients.filter(c => c.CS === csName);
+        
+        if (!clientsOfCS.some(c => c['Squad CS'])) {
+            return;
+        }
+
+        const squadCounts = clientsOfCS.reduce((acc, client) => {
+            const squad = client['Squad CS'];
+            if (squad) {
+                acc[squad] = (acc[squad] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        let majoritySquad = '';
+        let maxCount = 0;
+        for (const squad in squadCounts) {
+            if (squadCounts[squad] > maxCount) {
+                maxCount = squadCounts[squad];
+                majoritySquad = squad;
+            }
+        }
+        
+        if (majoritySquad) {
+            csToSquadMap.set(csName, majoritySquad);
+        }
+    });
+};
+
 const processInitialData = () => {
     statusMessage.textContent = 'Processando dados...';
 
@@ -1217,6 +1253,10 @@ const processInitialData = () => {
         };
     });
 
+    if (currentUser.isManager) {
+        buildCsToSquadMap();
+    }
+
     populateFilters();
 
     if (!currentUser.isManager) {
@@ -1226,7 +1266,7 @@ const processInitialData = () => {
             autoSelectSegment(clientsOfLoggedInUser);
         }
     }
-buildCsToSquadMap();
+
     renderDataTables();
     statusMessage.style.display = 'none';
     dashboard.style.display = 'block';
@@ -1244,7 +1284,6 @@ buildCsToSquadMap();
     updateDashboard();
     renderOverdueView();
 };
-       
 
 const updateIsmFilter = () => {
 const teamView = selectOnboardingTeam.value;
@@ -1268,47 +1307,7 @@ option.textContent = ism;
 selectISM.appendChild(option);
 });
 };
-// ADICIONE ESTA NOVA FUNÇÃO COMPLETA
-const buildCsToSquadMap = () => {
-    // Primeiro, pegamos uma lista de todos os CSs únicos
-    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
 
-    // Para cada CS, vamos descobrir qual é o seu Squad principal
-    allCSs.forEach(csName => {
-        // Filtra todos os clientes daquele CS
-        const clientsOfCS = rawClients.filter(c => c.CS === csName);
-        
-        // Se o CS não tiver clientes com Squad definido, pula para o próximo
-        if (!clientsOfCS.some(c => c['Squad CS'])) {
-            return;
-        }
-
-        // Conta quantos clientes existem em cada Squad para este CS
-        const squadCounts = clientsOfCS.reduce((acc, client) => {
-            const squad = client['Squad CS'];
-            if (squad) {
-                acc[squad] = (acc[squad] || 0) + 1;
-            }
-            return acc;
-        }, {});
-
-        // Encontra o Squad com a maior contagem de clientes
-        let majoritySquad = '';
-        let maxCount = 0;
-        for (const squad in squadCounts) {
-            if (squadCounts[squad] > maxCount) {
-                maxCount = squadCounts[squad];
-                majoritySquad = squad;
-            }
-        }
-        
-        // Armazena o resultado no nosso Map
-        if (majoritySquad) {
-            csToSquadMap.set(csName, majoritySquad);
-        }
-    });
-};
-       
 const populateFilters = () => {
 const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
 const selectSquad = document.getElementById('select-squad');
@@ -1335,15 +1334,17 @@ if (!currentUser.isManager) {
     selectCS.disabled = true;
 }
 
-const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
-selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
-const sortedSquads = [...squadSet].sort();
-sortedSquads.forEach(squad => {
-    const option = document.createElement('option');
-    option.value = squad;
-    option.textContent = squad;
-    selectSquad.appendChild(option);
-});
+if (currentUser.isManager) {
+    const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
+    selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
+    const sortedSquads = [...squadSet].sort();
+    sortedSquads.forEach(squad => {
+        const option = document.createElement('option');
+        option.value = squad;
+        option.textContent = squad;
+        selectSquad.appendChild(option);
+    });
+}
 
 updateIsmFilter();
 
@@ -1911,16 +1912,23 @@ const updateDashboard = () => {
         const anoSelecionado = parseInt(selectYear.value, 10);
 
         const selectedCS = selectCS.value;
-        const selectedSquad = document.getElementById('select-squad').value;
         let filteredClients = rawClients;
+        
+        let csForCalc = selectedCS;
 
-        if (selectedSquad !== 'Todos') {
-            filteredClients = rawClients.filter(d => d['Squad CS'] === selectedSquad);
-        } else if (selectedCS !== 'Todos') {
+        if (currentUser.isManager) {
+            const selectedSquad = document.getElementById('select-squad').value;
+            if (selectedSquad !== 'Todos') {
+                filteredClients = rawClients.filter(d => d['Squad CS'] === selectedSquad);
+                csForCalc = 'Todos'; // When filtering by squad, calculations should consider all CSs in that squad
+            } else if (selectedCS !== 'Todos') {
+                filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
+            }
+        } 
+        else {
             filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
         }
         
-        const csForCalc = selectedSquad !== 'Todos' ? 'Todos' : selectedCS;
         dataStore = {};
         Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, csForCalc, includeOnboarding));
 
@@ -2541,37 +2549,34 @@ const squadCsListDiv = document.getElementById('squad-cs-list');
     el.addEventListener('change', (event) => {
         const targetId = event.target.id;
 
-        if (targetId === 'select-squad') {
-            const selectedSquadValue = selectSquad.value;
-            if (selectedSquadValue !== 'Todos') {
-                if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
-                selectCS.disabled = true;
-                
-                // NOVO TRECHO CORRETO
-const csInSquad = [];
-// Itera sobre o Map que já calculamos
-for (const [cs, squad] of csToSquadMap.entries()) {
-    // Se o Squad do CS for o mesmo que o selecionado no filtro...
-    if (squad === selectedSquadValue) {
-        csInSquad.push(cs); // ...adiciona o CS à lista.
-    }
-}
-squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
+        if (currentUser.isManager) {
+            if (targetId === 'select-squad') {
+                const selectedSquadValue = selectSquad.value;
+                if (selectedSquadValue !== 'Todos') {
+                    if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
+                    selectCS.disabled = true;
+                    
+                    const csInSquad = [];
+                    for (const [cs, squad] of csToSquadMap.entries()) {
+                        if (squad === selectedSquadValue) {
+                            csInSquad.push(cs);
+                        }
+                    }
+                    squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
 
-            } else {
-                if(!currentUser.isManager) {
-                   selectCS.disabled = true;
                 } else {
-                   selectCS.disabled = false;
+                    selectCS.disabled = false;
+                    squadCsListDiv.textContent = '';
                 }
+            }
+
+            if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
+                if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
                 squadCsListDiv.textContent = '';
             }
         }
 
         if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
-            if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
-            squadCsListDiv.textContent = '';
-            
             const selectedCSValue = selectCS.value;
             const includeOnboarding = onboardingToggle.checked;
             let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
@@ -2586,6 +2591,24 @@ squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
         updateDashboard();
         renderOverdueView();
     });
+});
+
+tabsContainer.addEventListener('click', (e) => {
+    if (e.target.matches('.tab-button')) {
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById(e.target.dataset.tab).classList.add('active');
+
+        if (e.target.dataset.tab === 'overdue-view') {
+            renderOverdueView();
+        }
+        if (e.target.dataset.tab === 'data-view') {
+            renderDataTables();
+        } else if (e.target.dataset.tab === 'onboarding-view') {
+            renderOnboardingDashboard();
+        }
+    }
 });
 
 document.body.addEventListener('click', (e) => {
@@ -2822,7 +2845,6 @@ const includeOnboarding = onboardingToggle.checked;
 
 for (const cs of selectedCSs) {
 console.log(`Gerando relatório para: ${cs}`);
-const csForCalc = 'Todos'; // Ao exportar em lote, calculamos para o CS individual, mas a função precisa saber o contexto
 const filteredClients = rawClients.filter(d => d.CS?.trim() === cs);
 const reportData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, cs, includeOnboarding);
 generateAndDownloadHtmlReport(cs, reportData, appGoals);
@@ -2839,13 +2861,15 @@ bulkExportModal.querySelector('.close-button').addEventListener('click', () => c
 
 // --- CONTROLE DE ACESSO VISUAL ---
 if (!currentUser.isManager) {
-document.getElementById('settings-button').style.display = 'none';
-document.getElementById('bulk-export-button').style.display = 'none';
-const csLabel = document.querySelector('[for="select-cs"]');
-if(csLabel) {
-csLabel.style.pointerEvents = 'none';
-csLabel.style.opacity = '0.6';
-}
+    document.getElementById('settings-button').style.display = 'none';
+    document.getElementById('bulk-export-button').style.display = 'none';
+    document.getElementById('squad-filter-group').style.display = 'none';
+    document.getElementById('squad-cs-list').style.display = 'none';
+    const csLabel = document.querySelector('[for="select-cs"]');
+    if(csLabel) {
+        csLabel.style.pointerEvents = 'none';
+        csLabel.style.opacity = '0.6';
+    }
 }
 } 
 </script>
