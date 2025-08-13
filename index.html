@@ -1107,7 +1107,7 @@ let rawActivities = [], rawClients = [];
 let dataStore = {};
 let onboardingDataStore = {};
 let appGoals = {};
-
+let csToSquadMap = new Map(); // ADICIONE ESTA LINHA
 const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
 
 const loadGoals = () => {
@@ -1226,7 +1226,7 @@ const processInitialData = () => {
             autoSelectSegment(clientsOfLoggedInUser);
         }
     }
-
+buildCsToSquadMap();
     renderDataTables();
     statusMessage.style.display = 'none';
     dashboard.style.display = 'block';
@@ -1244,6 +1244,7 @@ const processInitialData = () => {
     updateDashboard();
     renderOverdueView();
 };
+       
 
 const updateIsmFilter = () => {
 const teamView = selectOnboardingTeam.value;
@@ -1267,7 +1268,47 @@ option.textContent = ism;
 selectISM.appendChild(option);
 });
 };
+// ADICIONE ESTA NOVA FUNÇÃO COMPLETA
+const buildCsToSquadMap = () => {
+    // Primeiro, pegamos uma lista de todos os CSs únicos
+    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
 
+    // Para cada CS, vamos descobrir qual é o seu Squad principal
+    allCSs.forEach(csName => {
+        // Filtra todos os clientes daquele CS
+        const clientsOfCS = rawClients.filter(c => c.CS === csName);
+        
+        // Se o CS não tiver clientes com Squad definido, pula para o próximo
+        if (!clientsOfCS.some(c => c['Squad CS'])) {
+            return;
+        }
+
+        // Conta quantos clientes existem em cada Squad para este CS
+        const squadCounts = clientsOfCS.reduce((acc, client) => {
+            const squad = client['Squad CS'];
+            if (squad) {
+                acc[squad] = (acc[squad] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        // Encontra o Squad com a maior contagem de clientes
+        let majoritySquad = '';
+        let maxCount = 0;
+        for (const squad in squadCounts) {
+            if (squadCounts[squad] > maxCount) {
+                maxCount = squadCounts[squad];
+                majoritySquad = squad;
+            }
+        }
+        
+        // Armazena o resultado no nosso Map
+        if (majoritySquad) {
+            csToSquadMap.set(csName, majoritySquad);
+        }
+    });
+};
+       
 const populateFilters = () => {
 const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
 const selectSquad = document.getElementById('select-squad');
@@ -2506,12 +2547,16 @@ const squadCsListDiv = document.getElementById('squad-cs-list');
                 if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
                 selectCS.disabled = true;
                 
-                const csInSquad = [...new Set(rawClients
-                    .filter(c => c['Squad CS'] === selectedSquadValue)
-                    .map(c => c.CS)
-                    .filter(Boolean))]
-                    .sort();
-                squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.join(', ')}`;
+                // NOVO TRECHO CORRETO
+const csInSquad = [];
+// Itera sobre o Map que já calculamos
+for (const [cs, squad] of csToSquadMap.entries()) {
+    // Se o Squad do CS for o mesmo que o selecionado no filtro...
+    if (squad === selectedSquadValue) {
+        csInSquad.push(cs); // ...adiciona o CS à lista.
+    }
+}
+squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
 
             } else {
                 if(!currentUser.isManager) {
