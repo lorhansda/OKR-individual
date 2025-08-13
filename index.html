@@ -994,434 +994,178 @@ localStorage.removeItem('googleUserToken');
 })();
 
 // O Dashboard só inicializa após o login
+// SUBSTITUA TODA A SUA FUNÇÃO initializeDashboard POR ESTA:
 async function initializeDashboard() {
-    // Tenta carregar dados do banco de dados ao iniciar
+    // FASE 1: CONFIGURAÇÃO INICIAL E DEFINIÇÃO DE CONSTANTES E EVENTOS
+    // Esta parte DEVE sempre ser executada para que a página seja interativa.
+    
+    /*
+       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
+       Sempre que uma alteração funcional for implementada neste script,
+       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
+    */
+
+    const userInfoCard = document.getElementById('user-info-card');
+    const userInfoText = document.getElementById('user-info-text');
+    const logoutButton = document.getElementById('logout-button');
+
+    if (currentUser.name) {
+        userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
+        userInfoCard.style.display = 'flex';
+    }
+    logoutButton.addEventListener('click', logout);
+
+    const themeToggle = document.getElementById('theme-toggle');
+    const applyTheme = (isLight) => {
+        if (isLight) {
+            document.body.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.classList.remove('light-theme');
+            localStorage.setItem('theme', 'dark');
+        }
+    };
+    themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked));
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        themeToggle.checked = true;
+        applyTheme(true);
+    } else {
+        themeToggle.checked = false;
+        applyTheme(false);
+    }
+
+    // Adiciona o listener para o botão de limpar cache
+    document.getElementById('clear-cache-button').addEventListener('click', clearDataFromDB);
+
+    const fileAtividadesInput = document.getElementById('file-atividades');
+    const fileClientesInput = document.getElementById('file-clientes');
+    fileAtividadesInput.addEventListener('change', (e) => { atividadesFile = e.target.files[0]; attemptProcess(); });
+    fileClientesInput.addEventListener('change', (e) => { clientesFile = e.target.files[0]; attemptProcess(); });
+
+    // Todos os outros listeners de eventos principais também são configurados aqui.
+    const selectSquad = document.getElementById('select-squad');
+    const squadCsListDiv = document.getElementById('squad-cs-list');
+
+    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, document.getElementById('select-comparison'), selectPeriod, selectOnboardingTeam, selectISM].forEach(el => {
+        el.addEventListener('change', (event) => {
+            const targetId = event.target.id;
+            if (currentUser.isManager) {
+                if (targetId === 'select-squad') {
+                    const selectedSquadValue = selectSquad.value;
+                    if (selectedSquadValue !== 'Todos') {
+                        if (selectCS.value !== 'Todos') selectCS.value = 'Todos';
+                        selectCS.disabled = true;
+                        const csInSquad = [];
+                        for (const [cs, squad] of csToSquadMap.entries()) {
+                            if (squad === selectedSquadValue) {
+                                csInSquad.push(cs);
+                            }
+                        }
+                        squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
+                    } else {
+                        selectCS.disabled = false;
+                        squadCsListDiv.textContent = '';
+                    }
+                }
+                if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
+                    if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
+                    squadCsListDiv.textContent = '';
+                }
+            }
+            if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
+                const selectedCSValue = selectCS.value;
+                const includeOnboarding = onboardingToggle.checked;
+                let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
+                const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
+                autoSelectSegment(filteredClients);
+            }
+            if (targetId === 'select-onboarding-team') {
+                updateIsmFilter();
+            }
+            updateDashboard();
+            renderOverdueView();
+        });
+    });
+
+    tabsContainer.addEventListener('click', (e) => {
+        if (e.target.matches('.tab-button')) {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(e.target.dataset.tab).classList.add('active');
+            if (e.target.dataset.tab === 'overdue-view') {
+                renderOverdueView();
+            }
+            if (e.target.dataset.tab === 'data-view') {
+                renderDataTables();
+            } else if (e.target.dataset.tab === 'onboarding-view') {
+                renderOnboardingDashboard();
+            }
+        }
+    });
+
+    document.body.addEventListener('click', (e) => {
+        const metricElement = e.target.closest('.metric[data-metric-id]');
+        if (metricElement && !metricElement.closest('#overdue-grid-container')) {
+            showDetailsModal(metricElement.dataset.metricId, metricElement.dataset.metricTitle);
+        }
+        const clientNameSpan = e.target.closest('span[data-client-name]');
+        if (clientNameSpan) {
+            showClient360Modal(clientNameSpan.dataset.clientName);
+        }
+        const trendButton = e.target.closest('.trend-chart-button');
+        if (trendButton) {
+            e.preventDefault();
+            const {
+                metricId,
+                metricTitle,
+                metricType
+            } = trendButton.dataset;
+            showTrendChart(metricId, metricTitle, metricType);
+        }
+    });
+
+    document.getElementById('divergence-marker').addEventListener('click', () => {
+        showDetailsModal('divergent-activities', 'Atividades para Clientes Fora da Carteira');
+    });
+    document.getElementById('settings-button').addEventListener('click', () => {
+        loadGoals();
+        showModal(settingsModal);
+    });
+    document.getElementById('save-settings-button').addEventListener('click', saveGoals);
+
+    // FASE 2: VERIFICAÇÃO DE CACHE
+    // Agora que tudo está configurado, tentamos carregar os dados salvos.
     const cachedData = await loadDataFromDB();
     if (cachedData) {
         rawActivities = cachedData.activities;
         rawClients = cachedData.clients;
-        // Oculta os inputs de arquivo e mostra uma mensagem
-        document.querySelector('[for="file-atividades"]').style.display = 'none';
-        document.querySelector('[for="file-clientes"]').style.display = 'none';
-        document.getElementById('file-atividades').style.display = 'none';
-        document.getElementById('file-clientes').style.display = 'none';
+        
+        document.querySelector('[for="file-atividades"]').closest('.control-group').style.display = 'none';
+        document.querySelector('[for="file-clientes"]').closest('.control-group').style.display = 'none';
+        
         statusMessage.textContent = 'Dados carregados do cache. Processando...';
         processInitialData();
-    }
-/*
-       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-       Sempre que uma alteração funcional for implementada neste script,
-       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-       */
-
-// --- NOVO: Exibe o card de usuário e configura o botão de logout ---
-const userInfoCard = document.getElementById('user-info-card');
-const userInfoText = document.getElementById('user-info-text');
-const logoutButton = document.getElementById('logout-button');
-
-if (currentUser.name) {
-// Adiciona um ícone e o nome do usuário ao card
-userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
-userInfoCard.style.display = 'flex';
-}
-
-logoutButton.addEventListener('click', logout);
-// --- FIM DA NOVA LÓGICA DE USUÁRIO ---
-
-
-// O código do dashboard agora é executado dentro desta função
-const themeToggle = document.getElementById('theme-toggle');
-
-const applyTheme = (isLight) => {
-if (isLight) {
-document.body.classList.add('light-theme');
-localStorage.setItem('theme', 'light');
-} else {
-document.body.classList.remove('light-theme');
-localStorage.setItem('theme', 'dark');
-}
-};
-
-themeToggle.addEventListener('change', () => {
-applyTheme(themeToggle.checked);
-});
-
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'light') {
-themeToggle.checked = true;
-applyTheme(true);
-} else {
-themeToggle.checked = false;
-applyTheme(false);
-}
-const normalizeText = (str = '') => String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-const getQuarter = (date) => Math.floor(date.getMonth() / 3);
-const formatDate = (date) => {
-if (!(date instanceof Date) || isNaN(date)) return '';
-const day = String(date.getDate()).padStart(2, '0');
-const month = String(date.getMonth() + 1).padStart(2, '0');
-const year = date.getFullYear();
-return `${day}/${month}/${year}`;
-};
-
-const parseDate = (dateInput) => {
-if (!dateInput) return null;
-if (dateInput instanceof Date) return dateInput;
-
-const dateStr = String(dateInput).trim();
-
-const parts = dateStr.split(/[-/]/);
-
-if (parts.length !== 3 || parts[0].length !== 4) {
-return null;
-}
-
-const year = parseInt(parts[0], 10);
-const month = parseInt(parts[1], 10);
-const day = parseInt(parts[2], 10);
-
-if (isNaN(year) || isNaN(month) || isNaN(day)) {
-return null;
-}
-
-const date = new Date(Date.UTC(year, month - 1, day));
-
-if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-return date;
-}
-
-return null;
-};
-
-// Funções de banco de dados
-const dbName = 'okrDashboardDB';
-const storeName = 'spreadsheetData';
-
-async function saveDataToDB(data) {
-    const db = await idb.openDB(dbName, 1, {
-        upgrade(db) {
-            db.createObjectStore(storeName);
-        },
-    });
-    await db.put(storeName, data, 'data');
-    console.log('Dados salvos no IndexedDB com sucesso.');
-}
-
-async function loadDataFromDB() {
-    try {
-        const db = await idb.openDB(dbName, 1);
-        const data = await db.get(storeName, 'data');
-        if (data && data.activities && data.clients) {
-            console.log('Dados carregados do IndexedDB.');
-            return data;
-        }
-        return null;
-    } catch (error) {
-        console.error('Nenhum banco de dados encontrado ainda.', error);
-        return null;
-    }
-}
-
-async function clearDataFromDB() {
-    const db = await idb.openDB(dbName, 1);
-    await db.clear(storeName);
-    alert('Cache de dados limpo! A página será recarregada.');
-    location.reload();
-}
-
-
-const onboardingDashboard = document.getElementById('onboarding-dashboard');
-const selectOnboardingTeam = document.getElementById('select-onboarding-team');
-const selectISM = document.getElementById('select-ism');
-const onboardingGeneralGrid = document.getElementById('onboarding-general-grid');
-const onboardingActivitiesGrid = document.getElementById('onboarding-activities-grid');
-const onboardingGeneralTitle = document.getElementById('onboarding-general-title');
-const onboardingActivitiesTitle = document.getElementById('onboarding-activities-title');
-
-
-const fileAtividadesInput = document.getElementById('file-atividades'), fileClientesInput = document.getElementById('file-clientes');
-const selectCS = document.getElementById('select-cs'), selectSegmento = document.getElementById('select-segmento');
-const selectMonth = document.getElementById('select-month'), selectYear = document.getElementById('select-year');
-const selectPeriod = document.getElementById('select-period');
-const onboardingToggle = document.getElementById('include-onboarding-toggle');
-const statusMessage = document.getElementById('status-message'), dashboard = document.getElementById('dashboard');
-const periodView = document.getElementById('period-view');
-const okrGrid = document.getElementById('okr-grid-container'), generalGrid = document.getElementById('general-indicators-grid');
-const playbookGrid = document.getElementById('playbooks-grid'), okrTitleHeader = document.getElementById('okr-title-header');
-const tabsContainer = document.querySelector('.tabs');
-const detailsModal = document.getElementById('details-modal'), settingsModal = document.getElementById('settings-modal'), client360Modal = document.getElementById('client-360-modal');
-
-let rawActivities = [], rawClients = [];
-let dataStore = {};
-let onboardingDataStore = {};
-let appGoals = {};
-let csToSquadMap = new Map();
-const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
-
-const loadGoals = () => {
-const savedGoals = localStorage.getItem('dashboardOKRsGoals');
-appGoals = savedGoals ? JSON.parse(savedGoals) : { ...defaultGoals };
-Object.keys(appGoals).forEach(key => {
-const input = document.getElementById(`goal-${key}`);
-if (input) input.value = appGoals[key];
-});
-};
-
-const saveGoals = () => {
-Object.keys(defaultGoals).forEach(key => {
-const input = document.getElementById(`goal-${key}`);
-if (input) { appGoals[key] = parseFloat(input.value) || defaultGoals[key]; }
-});
-localStorage.setItem('dashboardOKRsGoals', JSON.stringify(appGoals));
-alert('Metas salvas com sucesso!');
-settingsModal.style.display = 'none';
-updateDashboard();
-};
-
-const readFile = (file) => new Promise((resolve, reject) => {
-
-const excelSerialToDateObject = (serial) => {
-const correctedSerial = serial + 1;
-const excelTimestamp = (correctedSerial - 25569) * 86400 * 1000;
-const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
-return new Date(excelTimestamp + timezoneOffset);
-}
-
-const transpilePipeToCommaCSV = (pipeText) => {
-let inQuotes = false;
-let newCsvText = '';
-for (let i = 0; i < pipeText.length; i++) {
-const char = pipeText[i];
-if (char === '"') inQuotes = !inQuotes;
-newCsvText += (char === '|' && !inQuotes) ? ',' : char;
-}
-return newCsvText;
-};
-
-const reader = new FileReader();
-
-reader.onload = (event) => {
-try {
-const data = event.target.result;
-const fileName = file.name.toLowerCase();
-let workbook;
-
-if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-workbook = XLSX.read(data, { type: 'array', cellDates: true });
-} else {
-const standardCsvText = transpilePipeToCommaCSV(data);
-workbook = XLSX.read(standardCsvText, { type: 'string' });
-}
-
-const sheetName = workbook.SheetNames[0];
-const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
-
-const dateColumns = ["Criado em", "Previsão de conclusão", "Concluída em"];
-
-jsonData.forEach(row => {
-dateColumns.forEach(colName => {
-if (row[colName] && typeof row[colName] === 'number') {
-row[colName] = excelSerialToDateObject(row[colName]);
-}
-});
-});
-
-resolve(jsonData);
-
-} catch (e) {
-reject(new Error("Não foi possível processar o arquivo. Verifique se não está corrompido."));
-}
-};
-
-reader.onerror = (error) => {
-reject(new Error("Ocorreu um erro de hardware ou permissão ao tentar ler o arquivo."));
-};
-
-if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-reader.readAsArrayBuffer(file);
-} else {
-reader.readAsText(file, 'UTF-8'); 
-}
-});
-
-const buildCsToSquadMap = () => {
-    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
-    allCSs.forEach(csName => {
-        const clientsOfCS = rawClients.filter(c => c.CS === csName);
-        if (!clientsOfCS.some(c => c['Squad CS'])) {
-            return;
-        }
-        const squadCounts = clientsOfCS.reduce((acc, client) => {
-            const squad = client['Squad CS'];
-            if (squad) {
-                acc[squad] = (acc[squad] || 0) + 1;
-            }
-            return acc;
-        }, {});
-        let majoritySquad = '';
-        let maxCount = 0;
-        for (const squad in squadCounts) {
-            if (squadCounts[squad] > maxCount) {
-                maxCount = squadCounts[squad];
-                majoritySquad = squad;
-            }
-        }
-        if (majoritySquad) {
-            csToSquadMap.set(csName, majoritySquad);
-        }
-    });
-};
-
-const processInitialData = () => {
-    statusMessage.textContent = 'Processando dados...';
-
-    const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
-
-    rawActivities = rawActivities.map(ativ => {
-        const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
-        const clienteInfo = clienteMap.get(clienteKey) || {};
-        return { 
-            ...ativ, 
-            ClienteCompleto: clienteKey, 
-            Segmento: clienteInfo.Segmento, 
-            CS: clienteInfo.CS,
-            Squad: clienteInfo['Squad CS'],
-            Fase: clienteInfo.Fase,
-            ISM: clienteInfo.ISM,
-            PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
-            ConcluidaEm: parseDate(ativ['Concluída em']) 
-        };
-    });
-
-    if (currentUser.isManager) {
-        buildCsToSquadMap();
+    } else {
+        // Se não houver cache, a página simplesmente aguardará o upload dos arquivos,
+        // pois os listeners já foram ativados na FASE 1.
     }
 
-    populateFilters();
-
+    // FASE 3: CONTROLE DE ACESSO VISUAL
+    // No final, aplicamos as restrições visuais com base no tipo de usuário.
     if (!currentUser.isManager) {
-        const selectedCS = selectCS.value;
-        if (selectedCS) {
-            const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
-            autoSelectSegment(clientsOfLoggedInUser);
+        document.getElementById('settings-button').style.display = 'none';
+        document.getElementById('bulk-export-button').style.display = 'none';
+        document.getElementById('squad-filter-group').style.display = 'none';
+        document.getElementById('squad-cs-list').style.display = 'none';
+        const csLabel = document.querySelector('[for="select-cs"]');
+        if (csLabel) {
+            csLabel.style.pointerEvents = 'none';
+            csLabel.style.opacity = '0.6';
         }
     }
-
-    renderDataTables();
-    statusMessage.style.display = 'none';
-    dashboard.style.display = 'block';
-    onboardingDashboard.style.display = 'block';
-    tabsContainer.style.display = 'flex';
-    const selectSquad = document.getElementById('select-squad');
-    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
-    
-    if (!currentUser.isManager) {
-        selectCS.disabled = true;
-    }
-    
-    [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
-    
-    updateDashboard();
-    renderOverdueView();
-};
-
-const updateIsmFilter = () => {
-const teamView = selectOnboardingTeam.value;
-const onboardingClients = rawClients.filter(c => normalizeText(c.Fase) === 'onboarding');
-
-let relevantClients = [];
-if (teamView === 'syneco') {
-relevantClients = onboardingClients.filter(c => normalizeText(c.Cliente).includes('syneco'));
-} else if (teamView === 'outros') {
-relevantClients = onboardingClients.filter(c => !normalizeText(c.Cliente).includes('syneco'));
-} else {
-relevantClients = onboardingClients;
 }
-
-const ismSet = new Set(relevantClients.map(c => c.ISM).filter(Boolean));
-selectISM.innerHTML = '<option value="Todos">Todos os ISMs</option>';
-[...ismSet].sort().forEach(ism => {
-const option = document.createElement('option');
-option.value = ism;
-option.textContent = ism;
-selectISM.appendChild(option);
-});
-};
-
-const populateFilters = () => {
-const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
-const selectSquad = document.getElementById('select-squad');
-selectCS.innerHTML = ''; 
-
-if (currentUser.isManager) {
-selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
-}
-
-const sortedCS = [...csSet].sort();
-sortedCS.forEach(cs => { 
-const option = document.createElement('option'); 
-option.value = cs; 
-option.textContent = cs; 
-selectCS.appendChild(option); 
-});
-
-if (!currentUser.isManager) {
-    const userFirstName = currentUser.name.split(' ')[0];
-    const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
-    if (matchingCS) {
-        selectCS.value = matchingCS;
-    }
-    selectCS.disabled = true;
-}
-
-if (currentUser.isManager) {
-    const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
-    selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
-    const sortedSquads = [...squadSet].sort();
-    sortedSquads.forEach(squad => {
-        const option = document.createElement('option');
-        option.value = squad;
-        option.textContent = squad;
-        selectSquad.appendChild(option);
-    });
-}
-
-updateIsmFilter();
-
-const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
-selectSegmento.innerHTML = '';
-segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
-
-const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
-
-const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
-const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
-selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-
-const today = new Date();
-selectMonth.value = today.getMonth();
-if (years.includes(today.getFullYear())) {
-selectYear.value = today.getFullYear();
-} else if (years.length > 0) {
-selectYear.value = years[0];
-}
-};
-
-// --- CONTROLE DE ACESSO VISUAL --- (Movido para o final da função initializeDashboard)
-if (!currentUser.isManager) {
-    document.getElementById('settings-button').style.display = 'none';
-    document.getElementById('bulk-export-button').style.display = 'none';
-    document.getElementById('squad-filter-group').style.display = 'none';
-    document.getElementById('squad-cs-list').style.display = 'none';
-    const csLabel = document.querySelector('[for="select-cs"]');
-    if(csLabel) {
-        csLabel.style.pointerEvents = 'none';
-        csLabel.style.opacity = '0.6';
-    }
-}
-} 
 </script>
 </body>
 </html>
