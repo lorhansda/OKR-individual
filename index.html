@@ -1527,114 +1527,118 @@ selectISM.appendChild(option);
 };
 
 const populateFilters = () => {
-const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
-const selectSquad = document.getElementById('select-squad');
-selectCS.innerHTML = ''; 
+    const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+    const selectSquad = document.getElementById('select-squad');
+    selectCS.innerHTML = '';
 
-if (currentUser.isManager) {
-selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
-}
-
-const sortedCS = [...csSet].sort();
-sortedCS.forEach(cs => { 
-const option = document.createElement('option'); 
-option.value = cs; 
-option.textContent = cs; 
-selectCS.appendChild(option); 
-});
-
-// ### AJUSTE DE LÓGICA DE SELEÇÃO AUTOMÁTICA DO CS ###
-if (!currentUser.isManager) {
-    // 1. Obter identificadores do usuário a partir do nome e e-mail
-    const emailUsername = currentUser.email.split('@')[0];
-    const nameParts = currentUser.name.split(' ');
-
-    // 2. Criar uma lista priorizada de termos para busca
-    const searchTerms = [
-        ...nameParts.map(part => normalizeText(part)),
-        normalizeText(emailUsername).replace(/[\._-]/g, ' ') // Substitui separadores por espaço
-    ].flatMap(term => term.split(' ')).filter(term => term.length > 2); // Divide e remove termos curtos
-
-    const uniqueSearchTerms = [...new Set(searchTerms)]; // Remove duplicados
-
-    let bestMatch = null;
-
-    // 3. Tentar encontrar a melhor correspondência com base em prioridades
-    // Prioridade 1: Correspondência exata
-    for (const term of uniqueSearchTerms) {
-        const exactMatch = sortedCS.find(cs => normalizeText(cs) === term);
-        if (exactMatch) {
-            bestMatch = exactMatch;
-            break;
-        }
+    if (currentUser.isManager) {
+        selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
     }
 
-    // Prioridade 2: Se não houver correspondência exata, verificar se o nome do CS começa com o termo
-    if (!bestMatch) {
-        for (const term of uniqueSearchTerms) {
-            const startsWithMatch = sortedCS.find(cs => normalizeText(cs).startsWith(term));
-            if (startsWithMatch) {
-                bestMatch = startsWithMatch;
-                break;
-            }
-        }
-    }
-
-    // Prioridade 3: Como último recurso, verificar se o nome do CS inclui o termo
-    if (!bestMatch) {
-        for (const term of uniqueSearchTerms) {
-            const includesMatch = sortedCS.find(cs => normalizeText(cs).includes(term));
-            if (includesMatch) {
-                bestMatch = includesMatch;
-                break;
-            }
-        }
-    }
-
-    // 4. Aplicar a correspondência encontrada
-    if (bestMatch) {
-        selectCS.value = bestMatch;
-        console.log(`CS auto-selecionado: ${bestMatch} para o usuário ${currentUser.name}`);
-    } else {
-        console.warn(`Nenhum CS correspondente encontrado para ${currentUser.name} (${currentUser.email}).`);
-    }
-
-    selectCS.disabled = true;
-}
-// ### FIM DO AJUSTE ###
-
-if (currentUser.isManager) {
-    const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
-    selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
-    const sortedSquads = [...squadSet].sort();
-    sortedSquads.forEach(squad => {
+    const sortedCS = [...csSet].sort();
+    sortedCS.forEach(cs => {
         const option = document.createElement('option');
-        option.value = squad;
-        option.textContent = squad;
-        selectSquad.appendChild(option);
+        option.value = cs;
+        option.textContent = cs;
+        selectCS.appendChild(option);
     });
-}
 
-updateIsmFilter();
+    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA CORRIGIDA ###
+    if (!currentUser.isManager) {
+        const emailUsername = currentUser.email.split('@')[0];
+        const nameParts = currentUser.name.split(' ');
 
-const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
-selectSegmento.innerHTML = '';
-segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
+        const searchTerms = [...new Set([
+            ...nameParts.map(part => normalizeText(part)),
+            normalizeText(emailUsername).replace(/[\._-]/g, ' ')
+        ].flatMap(term => term.split(' ')).filter(term => term.length > 2))];
 
-const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+        let bestMatch = null;
 
-const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
-const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
-selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+        // Prioridade 1: Correspondência exata
+        for (const term of searchTerms) {
+            const exactMatch = sortedCS.find(cs => normalizeText(cs) === term);
+            if (exactMatch) {
+                bestMatch = exactMatch;
+                break;
+            }
+        }
 
-const today = new Date();
-selectMonth.value = today.getMonth();
-if (years.includes(today.getFullYear())) {
-selectYear.value = today.getFullYear();
-} else if (years.length > 0) {
-selectYear.value = years[0];
-}
+        // Prioridade 2: "Começa com"
+        if (!bestMatch) {
+            for (const term of searchTerms) {
+                const startsWithMatch = sortedCS.find(cs => normalizeText(cs).startsWith(term));
+                if (startsWithMatch) {
+                    bestMatch = startsWithMatch;
+                    break;
+                }
+            }
+        }
+
+        // Prioridade 3 (NOVA E MAIS EFICAZ): Verifica se o e-mail contém o nome de um CS
+        if (!bestMatch) {
+            const normalizedEmailUser = normalizeText(emailUsername);
+            const emailContainsCSMatch = sortedCS.find(cs => normalizedEmailUser.includes(normalizeText(cs)));
+            if (emailContainsCSMatch) {
+                bestMatch = emailContainsCSMatch;
+            }
+        }
+
+        // Prioridade 4: Fallback para "inclui"
+        if (!bestMatch) {
+            for (const term of searchTerms) {
+                const includesMatch = sortedCS.find(cs => normalizeText(cs).includes(term));
+                if (includesMatch) {
+                    bestMatch = includesMatch;
+                    break;
+                }
+            }
+        }
+
+        if (bestMatch) {
+            selectCS.value = bestMatch;
+            console.log(`CS auto-selecionado: ${bestMatch} para o usuário ${currentUser.name}`);
+        } else {
+            console.warn(`Nenhum CS correspondente encontrado para ${currentUser.name} (${currentUser.email}).`);
+        }
+
+        selectCS.disabled = true;
+    }
+    // ### FIM DA CORREÇÃO ###
+
+
+    if (currentUser.isManager) {
+        const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
+        selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
+        const sortedSquads = [...squadSet].sort();
+        sortedSquads.forEach(squad => {
+            const option = document.createElement('option');
+            option.value = squad;
+            option.textContent = squad;
+            selectSquad.appendChild(option);
+        });
+    }
+
+    updateIsmFilter();
+
+    const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
+    selectSegmento.innerHTML = '';
+    segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
+
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+
+    const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
+    const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a, b) => b - a);
+    selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+    const today = new Date();
+    selectMonth.value = today.getMonth();
+    if (years.includes(today.getFullYear())) {
+        selectYear.value = today.getFullYear();
+    } else if (years.length > 0) {
+        selectYear.value = years[0];
+    }
 };
 
 const autoSelectSegment = (clients) => {
