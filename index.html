@@ -11,670 +11,127 @@
 <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-/*
-       -- REESTILIZAÇÃO VISUAL COMPLETA --
-       O código CSS abaixo foi totalmente reescrito para criar uma interface mais moderna,
-       atraente e dinâmica, conforme solicitado. Nenhuma funcionalidade ou ID utilizado
-       pelo JavaScript foi alterado. O foco foi em layout, cores, tipografia e interatividade.
-       */
+/* Seu CSS completo (sem alterações) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-:root {
---primary-color: #007BFF;
---primary-hover-color: #0056b3;
---secondary-color: #28a745;
---danger-color: #dc3545;
---warning-color: #ffc107;
-
---bg-color: #121828;
---bg-gradient: linear-gradient(180deg, #1a2238 0%, #121828 30%);
---card-bg-color: #1a2238;
---text-color: #F0F2F5;
---text-light-color: #a9b3c1;
---border-color: #3a476a;
---shadow-color: rgba(0, 0, 0, 0.2);
---font-family: 'Inter', sans-serif;
---border-radius-lg: 16px;
---border-radius-md: 12px;
---border-radius-sm: 8px;
-}
-
-body.light-theme {
---primary-color: #007BFF;
---primary-hover-color: #0069d9;
---bg-color: #f4f7fc;
---bg-gradient: linear-gradient(180deg, #ffffff 0%, #f4f7fc 40%);
---card-bg-color: #ffffff;
---text-color: #2c3e50;
---text-light-color: #57606A;
---border-color: #e3e8f0;
---shadow-color: rgba(99, 112, 134, 0.15);
-}
-
-*, *::before, *::after {
-box-sizing: border-box;
-}
-
-body {
-font-family: var(--font-family);
-background: var(--bg-gradient) no-repeat;
-background-color: var(--bg-color);
-margin: 0;
-padding: 24px;
-color: var(--text-color);
-line-height: 1.6;
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-transition: background-color 0.3s, color 0.3s;
-}
-
-/* --- LOGIN STYLES --- */
-#login-container {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-height: 90vh;
-text-align: center;
-}
-
-#login-container h1 {
-font-size: 2.5rem;
-font-weight: 700;
-margin-bottom: 15px;
-color: var(--text-color);
-}
-
-#login-container p {
-font-size: 1.2rem;
-color: var(--text-light-color);
-margin-bottom: 40px;
-max-width: 500px;
-}
-
-#dashboard-wrapper {
-display: none; /* Inicia oculto */
-}
-
-.container {
-max-width: 1800px;
-margin: auto;
-padding: 0 20px;
-}
-
-@keyframes fadeInDown {
-from { opacity: 0; transform: translateY(-15px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-header {
-text-align: center;
-margin-bottom: 40px;
-position: relative;
-animation: fadeInDown 0.6s ease-out;
-}
-
-header h1 {
-font-size: 2.8rem;
-font-weight: 800;
-color: var(--text-color);
-margin: 0 0 8px 0;
-letter-spacing: -1px;
-}
-
-header p {
-font-size: 1.2rem;
-color: var(--text-light-color);
-margin: 0;
-}
-
-.revision-marker {
-position: absolute;
-top: 5px;
-left: 5px;
-background-color: var(--border-color);
-color: var(--text-light-color);
-padding: 5px 15px;
-border-radius: var(--border-radius-sm);
-font-size: 0.8rem;
-font-weight: 600;
-}
-
-.header-actions {
-position: absolute;
-top: 0;
-right: 0;
-display: flex;
-align-items: center;
-gap: 15px;
-background-color: var(--card-bg-color);
-padding: 8px 12px;
-border-radius: var(--border-radius-lg);
-border: 1px solid var(--border-color);
-}
-
-#settings-button, #export-csv-button, #export-html-button, #bulk-export-button, #clear-cache-button {
-background: none; border: none;
-color: var(--text-light-color);
-font-size: 1.5rem; cursor: pointer;
-transition: color 0.3s ease, transform 0.3s ease, opacity 0.3s;
-}
-#settings-button:hover {
-color: var(--primary-color);
-transform: rotate(45deg);
-}
-#clear-cache-button:hover {
-color: var(--warning-color);
-transform: scale(1.1);
-}
-#export-csv-button:hover, #bulk-export-button:hover {
-color: var(--secondary-color);
-transform: scale(1.1);
-}
-#export-html-button:hover {
-color: var(--primary-color);
-transform: scale(1.1);
-}
-#export-csv-button:disabled, #export-html-button:disabled {
-opacity: 0.4;
-cursor: not-allowed;
-transform: none;
-color: var(--text-light-color);
-}
-
-.theme-switcher { display: flex; align-items: center; gap: 12px; }
-.theme-switcher .fa-sun, .theme-switcher .fa-moon { font-size: 1.2rem; color: var(--text-light-color); }
-.theme-switcher .fa-sun { opacity: 0.5; }
-body.light-theme .theme-switcher .fa-moon { opacity: 0.5; }
-body.light-theme .theme-switcher .fa-sun { opacity: 1; }
-
-.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 24px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--primary-color); }
-input:checked + .slider:before { transform: translateX(20px); }
-
-.controls {
-display: flex;
-gap: 20px;
-padding: 20px;
-background-color: var(--card-bg-color);
-border-radius: var(--border-radius-lg);
-margin-bottom: 30px;
-flex-wrap: wrap;
-justify-content: center;
-align-items: flex-end;
-border: 1px solid var(--border-color);
-box-shadow: 0 4px 15px var(--shadow-color);
-animation: fadeInDown 0.7s ease-out;
-}
-
-.onboarding-controls {
-display: flex;
-gap: 20px;
-padding: 20px;
-background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
-border-radius: var(--border-radius-lg);
-margin-bottom: 30px;
-flex-wrap: wrap;
-justify-content: center;
-align-items: flex-end;
-border: 1px solid var(--primary-color);
-}
-
-
-.control-group { display: flex; flex-direction: column; }
-.control-group label {
-font-weight: 600;
-margin-bottom: 10px;
-color: var(--text-color);
-font-size: 0.9rem;
-}
-.control-group input[type="file"], .control-group select {
-padding: 12px 15px;
-border-radius: var(--border-radius-sm);
-border: 1px solid var(--border-color);
-min-width: 180px;
-background-color: var(--bg-color);
-color: var(--text-color);
-font-family: var(--font-family);
-font-size: 1rem;
-transition: border-color 0.3s ease, box-shadow 0.3s ease;
--webkit-appearance: none;
--moz-appearance: none;
-appearance: none;
-background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b3c1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-background-repeat: no-repeat;
-background-position: right 15px center;
-background-size: 1em;
-}
-body.light-theme .control-group select {
-background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357606A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-}
-
-.control-group input[type="file"] { background-image: none; cursor: pointer;}
-.control-group input[type="file"]::file-selector-button {
-background-color: var(--primary-color);
-color: #fff;
-border: none;
-padding: 8px 12px;
-border-radius: var(--border-radius-sm);
-cursor: pointer;
-margin-right: 10px;
-transition: background-color 0.2s;
-}
-.control-group input[type="file"]::file-selector-button:hover { background-color: var(--primary-hover-color); }
-
-.control-group select:hover, .control-group input[type="file"]:hover { border-color: var(--primary-color); }
-.control-group select:focus {
-outline: none;
-border-color: var(--primary-color);
-box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 30%, transparent);
-}
-body.light-theme .control-group input[type="file"], 
-body.light-theme .control-group select { background-color: #FFFFFF; }
-
-.tabs {
-display: flex;
-gap: 5px;
-border-bottom: 2px solid var(--border-color);
-margin-bottom: 30px;
-}
-.tab-button {
-padding: 12px 25px; cursor: pointer; background-color: transparent;
-border: none; border-bottom: 4px solid transparent;
-font-size: 1.1rem; font-weight: 600;
-color: var(--text-light-color);
-transition: color 0.3s ease, border-color 0.3s ease;
-position: relative; top: 2px;
-}
-.tab-button:hover { color: var(--text-color); }
-.tab-button.active {
-color: var(--primary-color);
-border-bottom-color: var(--primary-color);
-}
-
-.tab-content { display: none; }
-.tab-content.active {
-display: block;
-animation: fadeIn 0.5s ease-in-out;
-}
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(10px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.metric-group { margin-bottom: 50px; }
-.group-title {
-font-size: 1.8rem; font-weight: 700;
-color: var(--text-color); margin: 0 0 25px 0;
-padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
-display: flex; align-items: center;
-}
-.group-title::before {
-content: '';
-display: inline-block;
-width: 5px; height: 28px;
-background-color: var(--primary-color);
-margin-right: 15px;
-border-radius: 5px;
-}
-
-.group-content {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-gap: 25px;
-}
-
-.card {
-background-color: var(--card-bg-color);
-border-radius: var(--border-radius-lg);
-padding: 25px; border: 1px solid var(--border-color);
-transition: transform 0.3s ease, box-shadow 0.3s ease;
-display: flex; flex-direction: column;
-box-shadow: 0 4px 15px var(--shadow-color);
-animation: fadeIn 0.5s ease-out backwards;
-}
-.card:hover {
-transform: translateY(-8px);
-box-shadow: 0 12px 25px var(--shadow-color);
-}
-
-.card h3 {
-margin-top: 0; color: var(--text-color);
-border-bottom: 1px solid var(--border-color);
-padding-bottom: 15px; font-size: 1.25rem;
-font-weight: 600; margin-bottom: 20px;
-display: flex; align-items: center; gap: 10px;
-position: relative; /* Necessário para posicionar o botão de gráfico */
-}
-.card h3::before {
-font-family: "Font Awesome 6 Free";
-font-weight: 900;
-color: var(--primary-color);
-}
-
-.card h3:contains("Adoção do Modelo de Negócio")::before { content: '\f085'; }
-.card h3:contains("Tipos de Contato")::before { content: '\f0e0'; }
-.card h3:contains("Visão Geral")::before { content: '\f0c8'; }
-.card h3:contains("Atividades de Plano")::before { content: '\f55b'; }
-.card h3:contains("Atividades de Adoção")::before { content: '\f518'; }
-.card h3:contains("Follow-Up")::before { content: '\f27a'; }
-.card h3:contains("Discovery")::before { content: '\f002'; }
-.card h3:contains("Engajamento")::before { content: '\f57d'; }
-.card h3:contains("Reuniões de QBR")::before { content: '\f073'; }
-.card h3:contains("Planos de Sucesso")::before { content: '\f19d'; }
-.card h3:contains("Baixo Engajamento")::before { content: '\f7a4'; }
-.card h3:contains("Geral do Onboarding")::before { content: '\f500'; }
-.card h3:contains("Contatos em Onboarding")::before { content: '\f2b9'; }
-.card h3:contains("Atividades em Onboarding")::before { content: '\f0ae'; }
-.card h3:contains("Média de Cobertura")::before { content: '\f51a'; }
-.card h3:contains("Total:")::before { content: '\f681'; }
-
-
-
-.trend-chart-button {
-position: absolute;
-top: -5px;
-right: -5px;
-background-color: var(--card-bg-color);
-border: 1px solid var(--border-color);
-color: var(--text-light-color);
-width: 36px;
-height: 36px;
-border-radius: 50%;
-cursor: pointer;
-font-size: 1rem;
-display: flex;
-align-items: center;
-justify-content: center;
-transition: all 0.3s ease;
-}
-
-.trend-chart-button:hover {
-color: var(--primary-color);
-border-color: var(--primary-color);
-transform: rotate(15deg) scale(1.1);
-box-shadow: 0 2px 10px var(--shadow-color);
-}
-
-.card-content { flex-grow: 1; }
-
-.metric {
-display: flex; justify-content: space-between; align-items: center;
-margin-bottom: 8px; font-size: 1rem; padding: 12px 8px;
-border-radius: var(--border-radius-sm);
-transition: background-color 0.2s ease;
-}
-.metric:last-of-type { margin-bottom: 0; }
-.metric[data-metric-id] { cursor: pointer; }
-.metric[data-metric-id]:hover {
-background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-}
-.metric-label { color: var(--text-light-color); font-weight: 500; }
-.metric-value { font-weight: 700; color: var(--text-color); font-size: 1.6rem; }
-.metric-value.success { color: var(--secondary-color); }
-.metric-value.danger { color: var(--danger-color); }
-.metric-value .sub-metric {
-font-size: 0.9rem; font-weight: 500;
-color: var(--text-light-color); margin-left: 8px;
-}
-
-.progress-bar-container {
-display: flex; align-items: center; gap: 15px;
-margin-top: 20px;
-}
-.progress-bar {
-flex-grow: 1;
-background-color: var(--border-color);
-border-radius: 25px; height: 12px;
-overflow: hidden;
-}
-.progress-bar-fill {
-background: var(--primary-color);
-height: 100%; width: 0%;
-transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
-border-radius: 25px;
-}
-.progress-percentage {
-font-size: 0.9rem; font-weight: 600;
-color: var(--text-color);
-flex-shrink: 0;
-}
-
-.loader {
-text-align: center; padding: 60px; font-weight: 600;
-grid-column: 1 / -1;
-background-color: var(--card-bg-color);
-border: 1px dashed var(--border-color);
-border-radius: var(--border-radius-lg); font-size: 1.2rem;
-}
-
-.data-table-wrapper {
-background-color: var(--card-bg-color);
-border-radius: var(--border-radius-lg); padding: 25px;
-border: 1px solid var(--border-color);
-margin-bottom: 30px;
-box-shadow: 0 4px 15px var(--shadow-color);
-}
-.data-table-wrapper h3 { margin: 0 0 20px 0; font-size: 1.5rem; }
-.data-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.95rem; }
-.data-table td span[data-client-name] { cursor: pointer; color: var(--primary-color); font-weight: 500; transition: color 0.2s; }
-.data-table td span[data-client-name]:hover { color: var(--primary-hover-color); }
-.data-table thead { position: sticky; top: 0; background-color: var(--bg-color); z-index: 10; }
-.data-table th { font-weight: 600; color: var(--text-color); }
-.data-table tbody tr:nth-child(even) { background-color: color-mix(in srgb, var(--border-color) 20%, transparent); }
-.data-table tbody tr:hover { background-color: color-mix(in srgb, var(--primary-color) 15%, transparent); }
-
-body.light-theme .data-table thead { background-color: #f6f8fa; }
-body.light-theme .data-table tbody tr:nth-child(even) { background-color: #f6f8fa; }
-body.light-theme .data-table tbody tr:hover { background-color: #e3e8f0; }
-
-.pagination-controls { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px 5px 10px; color: var(--text-light-color); }
-.pagination-controls button {
-padding: 8px 16px; cursor: pointer;
-border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);
-background-color: color-mix(in srgb, var(--border-color) 40%, transparent);
-color: var(--text-color); font-weight: 600;
-transition: all 0.2s ease;
-}
-.pagination-controls button:hover:not(:disabled) {
-background-color: var(--primary-color);
-color: #fff; border-color: var(--primary-color);
-}
-.pagination-controls button:disabled { cursor: not-allowed; opacity: 0.5; }
-
-/* --- CORREÇÃO DE SCROLL DO MODAL --- */
-.modal {
-display: none; position: fixed; z-index: 1000;
-left: 0; top: 0; width: 100%; height: 100%;
-background-color: rgba(0,0,0,0.7);
-backdrop-filter: blur(8px);
--webkit-backdrop-filter: blur(8px);
-animation: fadeInModal 0.3s ease;
-overflow-y: auto; /* Permite a rolagem do fundo escuro */
-padding: 4% 20px; /* Adiciona espaçamento vertical e horizontal */
-}
-@keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
-
-/* --- CORREÇÃO DE SCROLL DO MODAL --- */
-.modal-content {
-background-color: var(--card-bg-color);
-margin: 0 auto; /* Remove a margem vertical para a rolagem funcionar corretamente */
-padding: 35px;
-border: 1px solid var(--border-color);
-width: 90%; max-width: 1400px;
-border-radius: var(--border-radius-lg);
-box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-animation: slideInModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
-@keyframes slideInModal {
-from { opacity: 0; transform: translateY(-30px) scale(0.98); }
-to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; }
-.modal-header h2 { color: var(--primary-color); margin: 0; font-size: 1.8rem; font-weight: 700; }
-.close-button {
-color: var(--text-light-color); font-size: 2rem;
-cursor: pointer; transition: color 0.2s ease, transform 0.2s ease;
-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-}
-.close-button:hover, .close-button:focus { color: var(--danger-color); transform: rotate(90deg); }
-
-.modal-search-container { padding-bottom: 20px; }
-#modal-search-input {
-width: 100%; padding: 12px 20px;
-border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);
-background-color: var(--bg-color); color: var(--text-color);
-font-size: 1rem; font-family: var(--font-family);
-}
-#modal-search-input:focus {
-outline: none; border-color: var(--primary-color);
-box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 30%, transparent);
-}
-body.light-theme #modal-search-input { background-color: #FFFFFF; }
-
-#settings-modal .modal-content { max-width: 650px; }
-#trend-chart-modal .modal-content { max-width: 900px; }
-.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-.settings-grid .control-group { min-width: unset; }
-.settings-grid input[type="number"] {
-width: 100%; background-color: var(--bg-color);
-border-color: var(--border-color); color: var(--text-color);
-padding: 12px 15px; border-radius: var(--border-radius-sm);
-font-size: 1rem;
-}
-#save-settings-button {
-grid-column: 1 / -1; padding: 14px;
-font-size: 1.1rem; font-weight: 600;
-background-color: var(--primary-color); color: #fff;
-border: none; border-radius: var(--border-radius-sm);
-cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease;
-}
-#save-settings-button:hover { background-color: var(--primary-hover-color); }
-#save-settings-button:active { transform: scale(0.98); }
-
-#client-360-modal .client-info {
-display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-gap: 25px; margin-bottom: 25px; padding-bottom: 25px;
-border-bottom: 1px solid var(--border-color);
-}
-#client-360-modal .client-info-item {
-background-color: var(--bg-color); padding: 15px;
-border-radius: var(--border-radius-md);
-}
-#client-360-modal .client-info-label { font-size: 0.9rem; color: var(--text-light-color); margin-bottom: 8px; display: block; }
-#client-360-modal .client-info-value { font-size: 1.3rem; font-weight: 700; color: var(--text-color); }
-
-body.light-theme .settings-grid input[type="number"] {
-background-color: #FFFFFF; border-color: #D0D7DE; color: #24292F;
-}
-
-.divergence-info {
-background-color: color-mix(in srgb, var(--warning-color) 15%, transparent);
-border: 1px solid var(--warning-color); color: var(--warning-color);
-padding: 15px 20px; border-radius: var(--border-radius-md);
-margin-bottom: 30px; text-align: center;
-font-weight: 600; cursor: pointer;
-transition: background-color 0.2s;
-display: flex; align-items: center; justify-content: center; gap: 10px;
-}
-.divergence-info:hover { background-color: color-mix(in srgb, var(--warning-color) 25%, transparent); }
-.divergence-info::before {
-font-family: "Font Awesome 6 Free"; content: '\f071';
-font-weight: 900;
-}
-
-.trend-indicator {
-font-size: 0.95rem; font-weight: 700;
-margin-left: 10px; vertical-align: middle;
-padding: 3px 8px; border-radius: 6px;
-}
-.trend-positive { color: var(--secondary-color); background-color: color-mix(in srgb, var(--secondary-color) 15%, transparent); }
-.trend-negative { color: var(--danger-color); background-color: color-mix(in srgb, var(--danger-color) 15%, transparent); }
-.trend-neutral { color: var(--text-light-color); background-color: color-mix(in srgb, var(--text-light-color) 15%, transparent); }
-
-.overdue-metric {
-padding-top: 10px !important;
-border-top: 1px dashed var(--border-color) !important;
-margin-top: 10px !important;
-}
-.overdue-metric .metric-label {
-font-size: 0.9rem; font-weight: 500;
-color: var(--warning-color);
-}
-.overdue-metric .metric-label .fa-history,
-.overdue-metric .metric-label .fa-exclamation-triangle { 
-margin-right: 6px; 
-}
-.overdue-metric .metric-value {
-font-size: 1.2rem; color: var(--warning-color);
-}
-.metric.overdue-metric .metric-value.danger {
-color: var(--danger-color);
-}
-
-/* INÍCIO CSS NOVO */
-#cs-selection-list .cs-item {
-display: block;
-margin-bottom: 10px;
-}
-#cs-selection-list .cs-item label {
-font-size: 1.1rem;
-cursor: pointer;
-display: flex;
-align-items: center;
-}
-#cs-selection-list .cs-item input {
-width: 20px;
-height: 20px;
-margin-right: 15px;
-cursor: pointer;
-}
-#generate-bulk-reports-button:hover {
-background-color: #218838 !important;
-}
-/* FIM CSS NOVO */
-/* INÍCIO CSS NOVO - CARD DE USUÁRIO */
-#user-info-card {
-position: absolute;
-top: 15px;
-left: 20px;
-background-color: var(--card-bg-color);
-color: var(--text-light-color);
-padding: 8px 15px;
-border-radius: var(--border-radius-md);
-font-size: 0.9rem;
-font-weight: 600;
-display: flex;
-align-items: center;
-gap: 15px;
-border: 1px solid var(--border-color);
-z-index: 10;
-box-shadow: 0 4px 15px var(--shadow-color);
-animation: fadeInDown 0.6s ease-out;
-}
-
-#logout-button {
-background: none;
-border: none;
-color: var(--danger-color);
-cursor: pointer;
-font-size: 1.1rem;
-transition: transform 0.2s ease, color 0.2s ease;
-opacity: 0.7;
-}
-
-#logout-button:hover {
-transform: scale(1.1);
-opacity: 1;
-}
-/* FIM CSS NOVO */
-
+:root{--primary-color:#007BFF;--primary-hover-color:#0056b3;--secondary-color:#28a745;--danger-color:#dc3545;--warning-color:#ffc107;--bg-color:#121828;--bg-gradient:linear-gradient(180deg, #1a2238 0%, #121828 30%);--card-bg-color:#1a2238;--text-color:#F0F2F5;--text-light-color:#a9b3c1;--border-color:#3a476a;--shadow-color:rgba(0, 0, 0, 0.2);--font-family:'Inter', sans-serif;--border-radius-lg:16px;--border-radius-md:12px;--border-radius-sm:8px}
+body.light-theme{--primary-color:#007BFF;--primary-hover-color:#0069d9;--bg-color:#f4f7fc;--bg-gradient:linear-gradient(180deg, #ffffff 0%, #f4f7fc 40%);--card-bg-color:#ffffff;--text-color:#2c3e50;--text-light-color:#57606A;--border-color:#e3e8f0;--shadow-color:rgba(99, 112, 134, 0.15)}
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:var(--font-family);background:var(--bg-gradient) no-repeat;background-color:var(--bg-color);margin:0;padding:24px;color:var(--text-color);line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transition:background-color .3s,color .3s}
+#login-container{display:flex;flex-direction:column;align-items:center;justify-content:center;height:90vh;text-align:center}
+#login-container h1{font-size:2.5rem;font-weight:700;margin-bottom:15px;color:var(--text-color)}
+#login-container p{font-size:1.2rem;color:var(--text-light-color);margin-bottom:40px;max-width:500px}
+#dashboard-wrapper{display:none}
+.container{max-width:1800px;margin:auto;padding:0 20px}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-15px)}to{opacity:1;transform:translateY(0)}}
+header{text-align:center;margin-bottom:40px;position:relative;animation:fadeInDown .6s ease-out}
+header h1{font-size:2.8rem;font-weight:800;color:var(--text-color);margin:0 0 8px 0;letter-spacing:-1px}
+header p{font-size:1.2rem;color:var(--text-light-color);margin:0}
+.header-actions{position:absolute;top:0;right:0;display:flex;align-items:center;gap:15px;background-color:var(--card-bg-color);padding:8px 12px;border-radius:var(--border-radius-lg);border:1px solid var(--border-color)}
+#settings-button,#export-csv-button,#export-html-button,#bulk-export-button, #clear-cache-button{background:none;border:none;color:var(--text-light-color);font-size:1.5rem;cursor:pointer;transition:color .3s ease,transform .3s ease,opacity .3s}
+#settings-button:hover{color:var(--primary-color);transform:rotate(45deg)}
+#clear-cache-button:hover{color:var(--warning-color);transform:scale(1.1)}
+#export-csv-button:hover,#bulk-export-button:hover{color:var(--secondary-color);transform:scale(1.1)}
+#export-html-button:hover{color:var(--primary-color);transform:scale(1.1)}
+#export-csv-button:disabled,#export-html-button:disabled{opacity:.4;cursor:not-allowed;transform:none;color:var(--text-light-color)}
+.theme-switcher{display:flex;align-items:center;gap:12px}
+.theme-switcher .fa-sun,.theme-switcher .fa-moon{font-size:1.2rem;color:var(--text-light-color)}
+.theme-switcher .fa-sun{opacity:.5}
+body.light-theme .theme-switcher .fa-moon{opacity:.5}
+body.light-theme .theme-switcher .fa-sun{opacity:1}
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--border-color);transition:.4s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
+input:checked+.slider{background-color:var(--primary-color)}
+input:checked+.slider:before{transform:translateX(20px)}
+.controls{display:flex;gap:20px;padding:20px;background-color:var(--card-bg-color);border-radius:var(--border-radius-lg);margin-bottom:30px;flex-wrap:wrap;justify-content:center;align-items:flex-end;border:1px solid var(--border-color);box-shadow:0 4px 15px var(--shadow-color);animation:fadeInDown .7s ease-out}
+.control-group{display:flex;flex-direction:column}
+.control-group label{font-weight:600;margin-bottom:10px;color:var(--text-color);font-size:.9rem}
+.control-group input[type=file],.control-group select{padding:12px 15px;border-radius:var(--border-radius-sm);border:1px solid var(--border-color);min-width:180px;background-color:var(--bg-color);color:var(--text-color);font-family:var(--font-family);font-size:1rem;transition:border-color .3s ease,box-shadow .3s ease;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b3c1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 15px center;background-size:1em}
+body.light-theme .control-group select{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357606A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")}
+.control-group input[type=file]{background-image:none;cursor:pointer}
+.control-group input[type=file]::file-selector-button{background-color:var(--primary-color);color:#fff;border:none;padding:8px 12px;border-radius:var(--border-radius-sm);cursor:pointer;margin-right:10px;transition:background-color .2s}
+.control-group input[type=file]::file-selector-button:hover{background-color:var(--primary-hover-color)}
+.control-group select:hover,.control-group input[type=file]:hover{border-color:var(--primary-color)}
+.control-group select:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-color) 30%,transparent)}
+body.light-theme .control-group input[type=file],body.light-theme .control-group select{background-color:#fff}
+.tabs{display:flex;gap:5px;border-bottom:2px solid var(--border-color);margin-bottom:30px}
+.tab-button{padding:12px 25px;cursor:pointer;background-color:transparent;border:none;border-bottom:4px solid transparent;font-size:1.1rem;font-weight:600;color:var(--text-light-color);transition:color .3s ease,border-color .3s ease;position:relative;top:2px}
+.tab-button:hover{color:var(--text-color)}
+.tab-button.active{color:var(--primary-color);border-bottom-color:var(--primary-color)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .5s ease-in-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.metric-group{margin-bottom:50px}
+.group-title{font-size:1.8rem;font-weight:700;color:var(--text-color);margin:0 0 25px 0;padding-bottom:15px;border-bottom:1px solid var(--border-color);display:flex;align-items:center}
+.group-title::before{content:'';display:inline-block;width:5px;height:28px;background-color:var(--primary-color);margin-right:15px;border-radius:5px}
+.group-content{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:25px}
+.card{background-color:var(--card-bg-color);border-radius:var(--border-radius-lg);padding:25px;border:1px solid var(--border-color);transition:transform .3s ease,box-shadow .3s ease;display:flex;flex-direction:column;box-shadow:0 4px 15px var(--shadow-color);animation:fadeIn .5s ease-out backwards}
+.card:hover{transform:translateY(-8px);box-shadow:0 12px 25px var(--shadow-color)}
+.card h3{margin-top:0;color:var(--text-color);border-bottom:1px solid var(--border-color);padding-bottom:15px;font-size:1.25rem;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px;position:relative}
+.card h3::before{font-family:"Font Awesome 6 Free";font-weight:900;color:var(--primary-color)}
+.card h3:contains("Adoção do Modelo de Negócio")::before{content:'\f085'}
+.card h3:contains("Tipos de Contato")::before{content:'\f0e0'}
+.card h3:contains("Visão Geral")::before{content:'\f0c8'}
+.card h3:contains("Atividades de Plano")::before{content:'\f55b'}
+.card h3:contains("Atividades de Adoção")::before{content:'\f518'}
+.card h3:contains("Follow-Up")::before{content:'\f27a'}
+.card h3:contains("Discovery")::before{content:'\f002'}
+.card h3:contains("Engajamento")::before{content:'\f57d'}
+.card h3:contains("Reuniões de QBR")::before{content:'\f073'}
+.card h3:contains("Planos de Sucesso")::before{content:'\f19d'}
+.card h3:contains("Baixo Engajamento")::before{content:'\f7a4'}
+.card h3:contains("Geral do Onboarding")::before{content:'\f500'}
+.card h3:contains("Contatos em Onboarding")::before{content:'\f2b9'}
+.card h3:contains("Atividades em Onboarding")::before{content:'\f0ae'}
+.card h3:contains("Média de Cobertura")::before{content:'\f51a'}
+.card h3:contains("Total:")::before{content:'\f681'}
+.trend-chart-button{position:absolute;top:-5px;right:-5px;background-color:var(--card-bg-color);border:1px solid var(--border-color);color:var(--text-light-color);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .3s ease}
+.trend-chart-button:hover{color:var(--primary-color);border-color:var(--primary-color);transform:rotate(15deg) scale(1.1);box-shadow:0 2px 10px var(--shadow-color)}
+.card-content{flex-grow:1}
+.metric{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:1rem;padding:12px 8px;border-radius:var(--border-radius-sm);transition:background-color .2s ease}
+.metric:last-of-type{margin-bottom:0}
+.metric[data-metric-id]{cursor:pointer}
+.metric[data-metric-id]:hover{background-color:color-mix(in srgb,var(--primary-color) 10%,transparent)}
+.metric-label{color:var(--text-light-color);font-weight:500}
+.metric-value{font-weight:700;color:var(--text-color);font-size:1.6rem}
+.metric-value.success{color:var(--secondary-color)}
+.metric-value.danger{color:var(--danger-color)}
+.metric-value .sub-metric{font-size:.9rem;font-weight:500;color:var(--text-light-color);margin-left:8px}
+.progress-bar-container{display:flex;align-items:center;gap:15px;margin-top:20px}
+.progress-bar{flex-grow:1;background-color:var(--border-color);border-radius:25px;height:12px;overflow:hidden}
+.progress-bar-fill{background:var(--primary-color);height:100%;width:0;transition:width 1s cubic-bezier(.25,1,.5,1);border-radius:25px}
+.progress-percentage{font-size:.9rem;font-weight:600;color:var(--text-color);flex-shrink:0}
+.loader{text-align:center;padding:60px;font-weight:600;grid-column:1/-1;background-color:var(--card-bg-color);border:1px dashed var(--border-color);border-radius:var(--border-radius-lg);font-size:1.2rem}
+.data-table-wrapper{background-color:var(--card-bg-color);border-radius:var(--border-radius-lg);padding:25px;border:1px solid var(--border-color);margin-bottom:30px;box-shadow:0 4px 15px var(--shadow-color)}
+.data-table-wrapper h3{margin:0 0 20px 0;font-size:1.5rem}
+.data-table-container{max-height:500px;overflow-y:auto;border:1px solid var(--border-color);border-radius:var(--border-radius-sm)}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th,.data-table td{padding:14px 16px;border-bottom:1px solid var(--border-color);text-align:left;font-size:.95rem}
+.data-table td span[data-client-name]{cursor:pointer;color:var(--primary-color);font-weight:500;transition:color .2s}
+.data-table td span[data-client-name]:hover{color:var(--primary-hover-color)}
+.data-table thead{position:sticky;top:0;background-color:var(--bg-color);z-index:10}
+.data-table th{font-weight:600;color:var(--text-color)}
+.data-table tbody tr:nth-child(even){background-color:color-mix(in srgb,var(--border-color) 20%,transparent)}
+.data-table tbody tr:hover{background-color:color-mix(in srgb,var(--primary-color) 15%,transparent)}
+body.light-theme .data-table thead{background-color:#f6f8fa}
+body.light-theme .data-table tbody tr:nth-child(even){background-color:#f6f8fa}
+body.light-theme .data-table tbody tr:hover{background-color:#e3e8f0}
+.pagination-controls{display:flex;justify-content:space-between;align-items:center;padding:15px 10px 5px 10px;color:var(--text-light-color)}
+.pagination-controls button{padding:8px 16px;cursor:pointer;border-radius:var(--border-radius-sm);border:1px solid var(--border-color);background-color:color-mix(in srgb,var(--border-color) 40%,transparent);color:var(--text-color);font-weight:600;transition:all .2s ease}
+.pagination-controls button:hover:not(:disabled){background-color:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+.pagination-controls button:disabled{cursor:not-allowed;opacity:.5}
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:fadeInModal .3s ease;overflow-y:auto;padding:4% 20px}
+@keyframes fadeInModal{from{opacity:0}to{opacity:1}}
+.modal-content{background-color:var(--card-bg-color);margin:0 auto;padding:35px;border:1px solid var(--border-color);width:90%;max-width:1400px;border-radius:var(--border-radius-lg);box-shadow:0 15px 40px rgba(0,0,0,.4);animation:slideInModal .4s cubic-bezier(.25,1,.5,1)}
+@keyframes slideInModal{from{opacity:0;transform:translateY(-30px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:25px}
+.modal-header h2{color:var(--primary-color);margin:0;font-size:1.8rem;font-weight:700}
+.close-button{color:var(--text-light-color);font-size:2rem;cursor:pointer;transition:color .2s ease,transform .2s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.close-button:hover,.close-button:focus{color:var(--danger-color);transform:rotate(90deg)}
+#user-info-card{position:absolute;top:15px;left:20px;background-color:var(--card-bg-color);color:var(--text-light-color);padding:8px 15px;border-radius:var(--border-radius-md);font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:15px;border:1px solid var(--border-color);z-index:10;box-shadow:0 4px 15px var(--shadow-color);animation:fadeInDown .6s ease-out}
+#logout-button{background:none;border:none;color:var(--danger-color);cursor:pointer;font-size:1.1rem;transition:transform .2s ease,color .2s ease;opacity:.7}
+#logout-button:hover{transform:scale(1.1);opacity:1}
 </style>
 </head>
 <body>
@@ -790,150 +247,38 @@ data-logo_alignment="left">
 <main id="main-content">
 <div id="dashboard-view" class="tab-content active">
 <div id="dashboard" style="display: none;">
-
-<div class="metric-group">
-<h2 class="group-title">Indicadores Gerais da Carteira</h2>
-<div class="group-content" id="general-indicators-grid"></div>
+<div class="metric-group"><h2 class="group-title">Indicadores Gerais da Carteira</h2><div class="group-content" id="general-indicators-grid"></div></div>
+<div class="metric-group"><h2 class="group-title">Acompanhamento de Playbooks</h2><div class="group-content" id="playbooks-grid"></div></div>
+<div class="metric-group"><h2 class="group-title" id="okr-title-header">OKRs de Engajamento e Eventos</h2><div class="group-content" id="okr-grid-container"></div></div>
 </div>
-
-<div class="metric-group">
-<h2 class="group-title">Acompanhamento de Playbooks</h2>
-<div class="group-content" id="playbooks-grid"></div>
+<div id="period-view" style="display: none;"></div>
 </div>
-
-<div class="metric-group">
-<h2 class="group-title" id="okr-title-header">OKRs de Engajamento e Eventos</h2>
-<div class="group-content" id="okr-grid-container"></div>
-</div>
-
-</div>
-<div id="period-view" style="display: none;">
-</div>
-</div>
-
 <div id="onboarding-view" class="tab-content">
 <div id="onboarding-dashboard" style="display: none;">
 <section class="onboarding-controls">
-<div class="control-group">
-<label for="select-onboarding-team"><i class="fas fa-users-cog"></i> Visão do Time</label>
-<select id="select-onboarding-team" disabled>
-<option value="geral">Visão Geral</option>
-<option value="syneco">Syneco (Time CP)</option>
-<option value="outros">Outros Produtos (Time CS)</option>
-</select>
-</div>
-<div class="control-group">
-<label for="select-ism"><i class="fas fa-user-astronaut"></i> ISM Responsável</label>
-<select id="select-ism" disabled><option>Aguardando...</option></select>
-</div>
+<div class="control-group"><label for="select-onboarding-team"><i class="fas fa-users-cog"></i> Visão do Time</label><select id="select-onboarding-team" disabled><option value="geral">Visão Geral</option><option value="syneco">Syneco (Time CP)</option><option value="outros">Outros Produtos (Time CS)</option></select></div>
+<div class="control-group"><label for="select-ism"><i class="fas fa-user-astronaut"></i> ISM Responsável</label><select id="select-ism" disabled><option>Aguardando...</option></select></div>
 </section>
-
-<div class="metric-group">
-<h2 class="group-title" id="onboarding-general-title">Visão Geral do Onboarding</h2>
-<div class="group-content" id="onboarding-general-grid"></div>
-</div>
-<div class="metric-group">
-<h2 class="group-title" id="onboarding-activities-title">Acompanhamento de Atividades</h2>
-<div class="group-content" id="onboarding-activities-grid"></div>
+<div class="metric-group"><h2 class="group-title" id="onboarding-general-title">Visão Geral do Onboarding</h2><div class="group-content" id="onboarding-general-grid"></div></div>
+<div class="metric-group"><h2 class="group-title" id="onboarding-activities-title">Acompanhamento de Atividades</h2><div class="group-content" id="onboarding-activities-grid"></div></div>
 </div>
 </div>
-</div>
-
 <div id="overdue-view" class="tab-content">
-<div class="metric-group">
-<h2 class="group-title">Visão de Atividades Atrasadas</h2>
-<div class="group-content" id="overdue-grid-container">
-<div class="loader">Selecione um CS para ver as atividades atrasadas.</div>
+<div class="metric-group"><h2 class="group-title">Visão de Atividades Atrasadas</h2><div class="group-content" id="overdue-grid-container"><div class="loader">Selecione um CS para ver as atividades atrasadas.</div></div></div>
 </div>
-</div>
-</div>
-
 <div id="data-view" class="tab-content">
-<div class="data-table-wrapper">
-<h3><i class="fas fa-clipboard-list" style="margin-right:10px; color: var(--primary-color);"></i>Dados da Planilha de Atividades</h3>
-<div id="atividades-table" class="data-table-container"></div>
-<div id="atividades-pagination" class="pagination-controls"></div>
-</div>
-<div class="data-table-wrapper">
-<h3><i class="fas fa-address-book" style="margin-right:10px; color: var(--primary-color);"></i>Dados da Planilha de Clientes</h3>
-<div id="clientes-table" class="data-table-container"></div>
-<div id="clientes-pagination" class="pagination-controls"></div>
-</div>
+<div class="data-table-wrapper"><h3><i class="fas fa-clipboard-list" style="margin-right:10px; color: var(--primary-color);"></i>Dados da Planilha de Atividades</h3><div id="atividades-table" class="data-table-container"></div><div id="atividades-pagination" class="pagination-controls"></div></div>
+<div class="data-table-wrapper"><h3><i class="fas fa-address-book" style="margin-right:10px; color: var(--primary-color);"></i>Dados da Planilha de Clientes</h3><div id="clientes-table" class="data-table-container"></div><div id="clientes-pagination" class="pagination-controls"></div></div>
 </div>
 </main>
 </div>
 
-<div id="details-modal" class="modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 id="modal-title">Detalhes</h2>
-<span class="close-button">&times;</span>
-</div>
-<div class="modal-search-container">
-<input type="search" id="modal-search-input" placeholder="Pesquisar por cliente, atividade, etc...">
-</div>
-<div id="modal-body" class="data-table-container"></div>
-</div>
-</div>
+<div id="details-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="modal-title">Detalhes</h2><span class="close-button">&times;</span></div><div class="modal-search-container"><input type="search" id="modal-search-input" placeholder="Pesquisar por cliente, atividade, etc..."></div><div id="modal-body" class="data-table-container"></div></div></div>
+<div id="settings-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2><i class="fas fa-bullseye" style="margin-right:15px;"></i>Configurar Metas</h2><span class="close-button">&times;</span></div><div class="settings-grid"><div class="control-group"><label for="goal-sensescore">Média Sense Score</label><input type="number" id="goal-sensescore" step="1"></div><div class="control-group"><label for="goal-labs">Participação SKA LABS (%)</label><input type="number" id="goal-labs" step="1"></div><div class="control-group"><label for="goal-coverage">Cobertura de Carteira (%)</label><input type="number" id="goal-coverage" step="1"></div><div class="control-group"><label for="goal-qbr">Ligações de QBR (nº)</label><input type="number" id="goal-qbr" step="1"></div><div class="control-group"><label for="goal-successplan">Planos de Sucesso (nº)</label><input type="number" id="goal-successplan" step="1"></div><div class="control-group"><label for="goal-engagement">Performance Engajamento SMB (%)</label><input type="number" id="goal-engagement" step="1"></div><button id="save-settings-button"><i class="fas fa-save" style="margin-right:10px;"></i>Salvar Metas</button></div></div></div>
+<div id="client-360-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="client-360-name">Visão 360° do Cliente</h2><span class="close-button">&times;</span></div><div id="client-360-info" class="client-info"></div><div id="client-360-activities" class="data-table-wrapper" style="margin-bottom:0; box-shadow: none;"><h3>Histórico de Atividades</h3><div class="data-table-container"></div></div></div></div>
+<div id="trend-chart-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="trend-chart-title">Gráfico de Tendência</h2><span class="close-button">&times;</span></div><div id="trend-chart-container" style="padding: 20px 0;"><canvas id="trend-chart-canvas"></canvas></div></div></div>
+<div id="bulk-export-modal" class="modal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h2><i class="fas fa-users" style="margin-right:15px;"></i>Exportar Relatórios em Lote</h2><span class="close-button">&times;</span></div><div id="cs-selection-list" style="margin: 20px 0; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);"></div><button id="generate-bulk-reports-button" style="width: 100%; padding: 14px; font-size: 1.1rem; font-weight: 600; background-color: var(--secondary-color); color: #fff; border: none; border-radius: var(--border-radius-sm); cursor: pointer;"><i class="fas fa-download" style="margin-right:10px;"></i>Gerar Relatórios Selecionados</button></div></div>
 
-<div id="settings-modal" class="modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2><i class="fas fa-bullseye" style="margin-right:15px;"></i>Configurar Metas</h2>
-<span class="close-button">&times;</span>
-</div>
-<div class="settings-grid">
-<div class="control-group"><label for="goal-sensescore">Média Sense Score</label><input type="number" id="goal-sensescore" step="1"></div>
-<div class="control-group"><label for="goal-labs">Participação SKA LABS (%)</label><input type="number" id="goal-labs" step="1"></div>
-<div class="control-group"><label for="goal-coverage">Cobertura de Carteira (%)</label><input type="number" id="goal-coverage" step="1"></div>
-<div class="control-group"><label for="goal-qbr">Ligações de QBR (nº)</label><input type="number" id="goal-qbr" step="1"></div>
-<div class="control-group"><label for="goal-successplan">Planos de Sucesso (nº)</label><input type="number" id="goal-successplan" step="1"></div>
-<div class="control-group"><label for="goal-engagement">Performance Engajamento SMB (%)</label><input type="number" id="goal-engagement" step="1"></div>
-<button id="save-settings-button"><i class="fas fa-save" style="margin-right:10px;"></i>Salvar Metas</button>
-</div>
-</div>
-</div>
-
-<div id="client-360-modal" class="modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 id="client-360-name">Visão 360° do Cliente</h2>
-<span class="close-button">&times;</span>
-</div>
-<div id="client-360-info" class="client-info"></div>
-<div id="client-360-activities" class="data-table-wrapper" style="margin-bottom:0; box-shadow: none;">
-<h3>Histórico de Atividades</h3>
-<div class="data-table-container"></div>
-</div>
-</div>
-</div>
-
-<div id="trend-chart-modal" class="modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 id="trend-chart-title">Gráfico de Tendência</h2>
-<span class="close-button">&times;</span>
-</div>
-<div id="trend-chart-container" style="padding: 20px 0;">
-<canvas id="trend-chart-canvas"></canvas>
-</div>
-</div>
-</div>
-
-<div id="bulk-export-modal" class="modal">
-<div class="modal-content" style="max-width: 600px;">
-<div class="modal-header">
-<h2><i class="fas fa-users" style="margin-right:15px;"></i>Exportar Relatórios em Lote</h2>
-<span class="close-button">&times;</span>
-</div>
-<div id="cs-selection-list" style="margin: 20px 0; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
-</div>
-<button id="generate-bulk-reports-button" style="width: 100%; padding: 14px; font-size: 1.1rem; font-weight: 600; background-color: var(--secondary-color); color: #fff; border: none; border-radius: var(--border-radius-sm); cursor: pointer;">
-<i class="fas fa-download" style="margin-right:10px;"></i>Gerar Relatórios Selecionados
-</button>
-</div>
-</div>
-</div> 
 <script>
 // --- LOGIN AUTHENTICATION SCRIPT ---
 let currentUser = {
@@ -960,13 +305,13 @@ localStorage.setItem('googleUserToken', response.credential);
 currentUser.email = decodedToken.email;
 currentUser.name = decodedToken.name;
 
-const managerEmails = ['lorhanska@gmail.com']; 
+const managerEmails = ['lorhanska@gmail.com'];
 currentUser.isManager = managerEmails.includes(currentUser.email);
 
 document.getElementById('login-container').style.display = 'none';
 document.getElementById('dashboard-wrapper').style.display = 'block';
 
-initializeDashboard(); 
+initializeDashboard();
 } else {
 alert("Falha no login. Não foi possível verificar suas credenciais. Tente novamente.");
 localStorage.removeItem('googleUserToken');
@@ -993,179 +338,785 @@ localStorage.removeItem('googleUserToken');
 }
 })();
 
+
 // O Dashboard só inicializa após o login
-// SUBSTITUA TODA A SUA FUNÇÃO initializeDashboard POR ESTA:
-async function initializeDashboard() {
-    // FASE 1: CONFIGURAÇÃO INICIAL E DEFINIÇÃO DE CONSTANTES E EVENTOS
-    // Esta parte DEVE sempre ser executada para que a página seja interativa.
-    
-    /*
-       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-       Sempre que uma alteração funcional for implementada neste script,
-       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-    */
+function initializeDashboard() {
+/*
+       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
+       Sempre que uma alteração funcional for implementada neste script,
+       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
+       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
+       */
 
-    const userInfoCard = document.getElementById('user-info-card');
-    const userInfoText = document.getElementById('user-info-text');
-    const logoutButton = document.getElementById('logout-button');
+// --- NOVO: Exibe o card de usuário e configura o botão de logout ---
+const userInfoCard = document.getElementById('user-info-card');
+const userInfoText = document.getElementById('user-info-text');
+const logoutButton = document.getElementById('logout-button');
 
-    if (currentUser.name) {
-        userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
-        userInfoCard.style.display = 'flex';
-    }
-    logoutButton.addEventListener('click', logout);
+if (currentUser.name) {
+// Adiciona um ícone e o nome do usuário ao card
+userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
+userInfoCard.style.display = 'flex';
+}
 
-    const themeToggle = document.getElementById('theme-toggle');
-    const applyTheme = (isLight) => {
-        if (isLight) {
-            document.body.classList.add('light-theme');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.body.classList.remove('light-theme');
-            localStorage.setItem('theme', 'dark');
-        }
-    };
-    themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked));
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        themeToggle.checked = true;
-        applyTheme(true);
-    } else {
-        themeToggle.checked = false;
-        applyTheme(false);
-    }
+logoutButton.addEventListener('click', logout);
+// --- FIM DA NOVA LÓGICA DE USUÁRIO ---
 
-    // Adiciona o listener para o botão de limpar cache
-    document.getElementById('clear-cache-button').addEventListener('click', clearDataFromDB);
 
-    const fileAtividadesInput = document.getElementById('file-atividades');
-    const fileClientesInput = document.getElementById('file-clientes');
-    fileAtividadesInput.addEventListener('change', (e) => { atividadesFile = e.target.files[0]; attemptProcess(); });
-    fileClientesInput.addEventListener('change', (e) => { clientesFile = e.target.files[0]; attemptProcess(); });
+// O código do dashboard agora é executado dentro desta função
+const themeToggle = document.getElementById('theme-toggle');
 
-    // Todos os outros listeners de eventos principais também são configurados aqui.
-    const selectSquad = document.getElementById('select-squad');
-    const squadCsListDiv = document.getElementById('squad-cs-list');
+const applyTheme = (isLight) => {
+if (isLight) {
+document.body.classList.add('light-theme');
+localStorage.setItem('theme', 'light');
+} else {
+document.body.classList.remove('light-theme');
+localStorage.setItem('theme', 'dark');
+}
+};
 
-    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, document.getElementById('select-comparison'), selectPeriod, selectOnboardingTeam, selectISM].forEach(el => {
-        el.addEventListener('change', (event) => {
-            const targetId = event.target.id;
-            if (currentUser.isManager) {
-                if (targetId === 'select-squad') {
-                    const selectedSquadValue = selectSquad.value;
-                    if (selectedSquadValue !== 'Todos') {
-                        if (selectCS.value !== 'Todos') selectCS.value = 'Todos';
-                        selectCS.disabled = true;
-                        const csInSquad = [];
-                        for (const [cs, squad] of csToSquadMap.entries()) {
-                            if (squad === selectedSquadValue) {
-                                csInSquad.push(cs);
-                            }
-                        }
-                        squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
-                    } else {
-                        selectCS.disabled = false;
-                        squadCsListDiv.textContent = '';
-                    }
-                }
-                if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
-                    if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
-                    squadCsListDiv.textContent = '';
-                }
-            }
-            if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
-                const selectedCSValue = selectCS.value;
-                const includeOnboarding = onboardingToggle.checked;
-                let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
-                const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
-                autoSelectSegment(filteredClients);
-            }
-            if (targetId === 'select-onboarding-team') {
-                updateIsmFilter();
-            }
-            updateDashboard();
-            renderOverdueView();
-        });
-    });
+themeToggle.addEventListener('change', () => {
+applyTheme(themeToggle.checked);
+});
 
-    tabsContainer.addEventListener('click', (e) => {
-        if (e.target.matches('.tab-button')) {
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            document.getElementById(e.target.dataset.tab).classList.add('active');
-            if (e.target.dataset.tab === 'overdue-view') {
-                renderOverdueView();
-            }
-            if (e.target.dataset.tab === 'data-view') {
-                renderDataTables();
-            } else if (e.target.dataset.tab === 'onboarding-view') {
-                renderOnboardingDashboard();
-            }
-        }
-    });
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'light') {
+themeToggle.checked = true;
+applyTheme(true);
+} else {
+themeToggle.checked = false;
+applyTheme(false);
+}
+const normalizeText = (str = '') => String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const getQuarter = (date) => Math.floor(date.getMonth() / 3);
+const formatDate = (date) => {
+if (!(date instanceof Date) || isNaN(date)) return '';
+const day = String(date.getDate()).padStart(2, '0');
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const year = date.getFullYear();
+return `${day}/${month}/${year}`;
+};
 
-    document.body.addEventListener('click', (e) => {
-        const metricElement = e.target.closest('.metric[data-metric-id]');
-        if (metricElement && !metricElement.closest('#overdue-grid-container')) {
-            showDetailsModal(metricElement.dataset.metricId, metricElement.dataset.metricTitle);
-        }
-        const clientNameSpan = e.target.closest('span[data-client-name]');
-        if (clientNameSpan) {
-            showClient360Modal(clientNameSpan.dataset.clientName);
-        }
-        const trendButton = e.target.closest('.trend-chart-button');
-        if (trendButton) {
-            e.preventDefault();
-            const {
-                metricId,
-                metricTitle,
-                metricType
-            } = trendButton.dataset;
-            showTrendChart(metricId, metricTitle, metricType);
-        }
-    });
+const parseDate = (dateInput) => {
+if (!dateInput) return null;
+if (dateInput instanceof Date) return dateInput;
 
-    document.getElementById('divergence-marker').addEventListener('click', () => {
-        showDetailsModal('divergent-activities', 'Atividades para Clientes Fora da Carteira');
-    });
-    document.getElementById('settings-button').addEventListener('click', () => {
-        loadGoals();
-        showModal(settingsModal);
-    });
-    document.getElementById('save-settings-button').addEventListener('click', saveGoals);
+const dateStr = String(dateInput).trim();
 
-    // FASE 2: VERIFICAÇÃO DE CACHE
-    // Agora que tudo está configurado, tentamos carregar os dados salvos.
-    const cachedData = await loadDataFromDB();
-    if (cachedData) {
-        rawActivities = cachedData.activities;
-        rawClients = cachedData.clients;
+const parts = dateStr.split(/[-/]/);
+
+if (parts.length !== 3 || parts[0].length !== 4) {
+return null;
+}
+
+const year = parseInt(parts[0], 10);
+const month = parseInt(parts[1], 10);
+const day = parseInt(parts[2], 10);
+
+if (isNaN(year) || isNaN(month) || isNaN(day)) {
+return null;
+}
+
+const date = new Date(Date.UTC(year, month - 1, day));
+
+if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+return date;
+}
+
+return null;
+};
+
+const onboardingDashboard = document.getElementById('onboarding-dashboard');
+const selectOnboardingTeam = document.getElementById('select-onboarding-team');
+const selectISM = document.getElementById('select-ism');
+const onboardingGeneralGrid = document.getElementById('onboarding-general-grid');
+const onboardingActivitiesGrid = document.getElementById('onboarding-activities-grid');
+const onboardingGeneralTitle = document.getElementById('onboarding-general-title');
+const onboardingActivitiesTitle = document.getElementById('onboarding-activities-title');
+
+
+const fileAtividadesInput = document.getElementById('file-atividades'), fileClientesInput = document.getElementById('file-clientes');
+const selectCS = document.getElementById('select-cs'), selectSegmento = document.getElementById('select-segmento');
+const selectMonth = document.getElementById('select-month'), selectYear = document.getElementById('select-year');
+const selectPeriod = document.getElementById('select-period');
+const onboardingToggle = document.getElementById('include-onboarding-toggle');
+const statusMessage = document.getElementById('status-message'), dashboard = document.getElementById('dashboard');
+const periodView = document.getElementById('period-view');
+const okrGrid = document.getElementById('okr-grid-container'), generalGrid = document.getElementById('general-indicators-grid');
+const playbookGrid = document.getElementById('playbooks-grid'), okrTitleHeader = document.getElementById('okr-title-header');
+const tabsContainer = document.querySelector('.tabs');
+const detailsModal = document.getElementById('details-modal'), settingsModal = document.getElementById('settings-modal'), client360Modal = document.getElementById('client-360-modal');
+
+let rawActivities = [], rawClients = [];
+let dataStore = {};
+let onboardingDataStore = {};
+let appGoals = {};
+let csToSquadMap = new Map();
+let atividadesFile, clientesFile;
+
+const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
+
+const loadGoals = () => {
+const savedGoals = localStorage.getItem('dashboardOKRsGoals');
+appGoals = savedGoals ? JSON.parse(savedGoals) : { ...defaultGoals };
+Object.keys(appGoals).forEach(key => {
+const input = document.getElementById(`goal-${key}`);
+if (input) input.value = appGoals[key];
+});
+};
+
+const saveGoals = () => {
+Object.keys(defaultGoals).forEach(key => {
+const input = document.getElementById(`goal-${key}`);
+if (input) { appGoals[key] = parseFloat(input.value) || defaultGoals[key]; }
+});
+localStorage.setItem('dashboardOKRsGoals', JSON.stringify(appGoals));
+alert('Metas salvas com sucesso!');
+settingsModal.style.display = 'none';
+updateDashboard();
+};
+
+const readFile = (file) => new Promise((resolve, reject) => {
+
+const excelSerialToDateObject = (serial) => {
+const correctedSerial = serial + 1;
+const excelTimestamp = (correctedSerial - 25569) * 86400 * 1000;
+const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+return new Date(excelTimestamp + timezoneOffset);
+}
+
+const transpilePipeToCommaCSV = (pipeText) => {
+let inQuotes = false;
+let newCsvText = '';
+for (let i = 0; i < pipeText.length; i++) {
+const char = pipeText[i];
+if (char === '"') inQuotes = !inQuotes;
+newCsvText += (char === '|' && !inQuotes) ? ',' : char;
+}
+return newCsvText;
+};
+
+const reader = new FileReader();
+
+reader.onload = (event) => {
+try {
+const data = event.target.result;
+const fileName = file.name.toLowerCase();
+let workbook;
+
+if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+workbook = XLSX.read(data, { type: 'array', cellDates: true });
+} else {
+const standardCsvText = transpilePipeToCommaCSV(data);
+workbook = XLSX.read(standardCsvText, { type: 'string' });
+}
+
+const sheetName = workbook.SheetNames[0];
+const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+
+const dateColumns = ["Criado em", "Previsão de conclusão", "Concluída em"];
+
+jsonData.forEach(row => {
+dateColumns.forEach(colName => {
+if (row[colName] && typeof row[colName] === 'number') {
+row[colName] = excelSerialToDateObject(row[colName]);
+}
+});
+});
+
+resolve(jsonData);
+
+} catch (e) {
+reject(new Error("Não foi possível processar o arquivo. Verifique se não está corrompido."));
+}
+};
+
+reader.onerror = (error) => {
+reject(new Error("Ocorreu um erro de hardware ou permissão ao tentar ler o arquivo."));
+};
+
+if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+reader.readAsArrayBuffer(file);
+} else {
+reader.readAsText(file, 'UTF-8');
+}
+});
+
+const buildCsToSquadMap = () => {
+    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
+
+    allCSs.forEach(csName => {
+        const clientsOfCS = rawClients.filter(c => c.CS === csName);
         
-        document.querySelector('[for="file-atividades"]').closest('.control-group').style.display = 'none';
-        document.querySelector('[for="file-clientes"]').closest('.control-group').style.display = 'none';
+        if (!clientsOfCS.some(c => c['Squad CS'])) {
+            return;
+        }
+
+        const squadCounts = clientsOfCS.reduce((acc, client) => {
+            const squad = client['Squad CS'];
+            if (squad) {
+                acc[squad] = (acc[squad] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        let majoritySquad = '';
+        let maxCount = 0;
+        for (const squad in squadCounts) {
+            if (squadCounts[squad] > maxCount) {
+                maxCount = squadCounts[squad];
+                majoritySquad = squad;
+            }
+        }
         
-        statusMessage.textContent = 'Dados carregados do cache. Processando...';
-        processInitialData();
-    } else {
-        // Se não houver cache, a página simplesmente aguardará o upload dos arquivos,
-        // pois os listeners já foram ativados na FASE 1.
+        if (majoritySquad) {
+            csToSquadMap.set(csName, majoritySquad);
+        }
+    });
+};
+
+const processInitialData = () => {
+    statusMessage.textContent = 'Processando dados...';
+
+    const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
+
+    rawActivities = rawActivities.map(ativ => {
+        const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
+        const clienteInfo = clienteMap.get(clienteKey) || {};
+        return { 
+            ...ativ, 
+            ClienteCompleto: clienteKey, 
+            Segmento: clienteInfo.Segmento, 
+            CS: clienteInfo.CS,
+            Squad: clienteInfo['Squad CS'],
+            Fase: clienteInfo.Fase,
+            ISM: clienteInfo.ISM,
+            PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
+            ConcluidaEm: parseDate(ativ['Concluída em']) 
+        };
+    });
+
+    if (currentUser.isManager) {
+        buildCsToSquadMap();
     }
 
-    // FASE 3: CONTROLE DE ACESSO VISUAL
-    // No final, aplicamos as restrições visuais com base no tipo de usuário.
+    populateFilters();
+
     if (!currentUser.isManager) {
-        document.getElementById('settings-button').style.display = 'none';
-        document.getElementById('bulk-export-button').style.display = 'none';
-        document.getElementById('squad-filter-group').style.display = 'none';
-        document.getElementById('squad-cs-list').style.display = 'none';
-        const csLabel = document.querySelector('[for="select-cs"]');
-        if (csLabel) {
-            csLabel.style.pointerEvents = 'none';
-            csLabel.style.opacity = '0.6';
+        const selectedCS = selectCS.value;
+        if (selectedCS) {
+            const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
+            autoSelectSegment(clientsOfLoggedInUser);
         }
+    }
+
+    renderDataTables();
+    statusMessage.style.display = 'none';
+    dashboard.style.display = 'block';
+    onboardingDashboard.style.display = 'block';
+    tabsContainer.style.display = 'flex';
+    const selectSquad = document.getElementById('select-squad');
+    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+    
+    if (!currentUser.isManager) {
+        selectCS.disabled = true;
+    }
+    
+    [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
+    
+    updateDashboard();
+    renderOverdueView();
+};
+
+const updateIsmFilter = () => {
+const teamView = selectOnboardingTeam.value;
+const onboardingClients = rawClients.filter(c => normalizeText(c.Fase) === 'onboarding');
+
+let relevantClients = [];
+if (teamView === 'syneco') {
+relevantClients = onboardingClients.filter(c => normalizeText(c.Cliente).includes('syneco'));
+} else if (teamView === 'outros') {
+relevantClients = onboardingClients.filter(c => !normalizeText(c.Cliente).includes('syneco'));
+} else {
+relevantClients = onboardingClients;
+}
+
+const ismSet = new Set(relevantClients.map(c => c.ISM).filter(Boolean));
+selectISM.innerHTML = '<option value="Todos">Todos os ISMs</option>';
+[...ismSet].sort().forEach(ism => {
+const option = document.createElement('option');
+option.value = ism;
+option.textContent = ism;
+selectISM.appendChild(option);
+});
+};
+
+const populateFilters = () => {
+const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+const selectSquad = document.getElementById('select-squad');
+selectCS.innerHTML = ''; 
+
+if (currentUser.isManager) {
+selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
+}
+
+const sortedCS = [...csSet].sort();
+sortedCS.forEach(cs => { 
+const option = document.createElement('option'); 
+option.value = cs; 
+option.textContent = cs; 
+selectCS.appendChild(option); 
+});
+
+if (!currentUser.isManager) {
+    const userFirstName = currentUser.name.split(' ')[0];
+    const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
+    if (matchingCS) {
+        selectCS.value = matchingCS;
     }
 }
+
+if (currentUser.isManager) {
+    const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
+    selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
+    const sortedSquads = [...squadSet].sort();
+    sortedSquads.forEach(squad => {
+        const option = document.createElement('option');
+        option.value = squad;
+        option.textContent = squad;
+        selectSquad.appendChild(option);
+    });
+}
+
+updateIsmFilter();
+
+const segmentosPredefinidos = ["SMB CAD", "SMB Multiprodutos", "MID/Enterprise"];
+selectSegmento.innerHTML = '';
+segmentosPredefinidos.forEach(seg => { const option = document.createElement('option'); option.value = seg; option.textContent = seg; selectSegmento.appendChild(option); });
+
+const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+
+const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
+const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
+selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+const today = new Date();
+selectMonth.value = today.getMonth();
+if (years.includes(today.getFullYear())) {
+selectYear.value = today.getFullYear();
+} else if (years.length > 0) {
+selectYear.value = years[0];
+}
+};
+
+const autoSelectSegment = (clients) => {
+if (!clients || clients.length === 0) return;
+let midEnterpriseCount = 0, smbCount = 0;
+clients.forEach(c => {
+const segmento = normalizeText(c.Segmento || '');
+if (segmento === 'mid-market' || segmento === 'enterprise') midEnterpriseCount++;
+else if (segmento.includes('smb')) smbCount++;
+});
+
+if (midEnterpriseCount > smbCount) {
+selectSegmento.value = 'MID/Enterprise';
+} else {
+const smbClients = clients.filter(c => normalizeText(c.Segmento || '').includes('smb'));
+let smbCadCount = 0, smbMultiCount = 0;
+smbClients.forEach(c => {
+const clientName = (c.Cliente || '').trim().toLowerCase();
+if (clientName.endsWith('solidworks') || clientName.endsWith('solidworks electrical')) smbCadCount++;
+else smbMultiCount++;
+});
+selectSegmento.value = smbCadCount > smbMultiCount ? 'SMB CAD' : 'SMB Multiprodutos';
+}
+};
+
+const calculateOnboardingMetrics = (month, year, activities, clients, teamView, selectedISM) => {
+const metrics = {};
+
+const getPeriodFilter = (dateField) => (item) => item[dateField]?.getMonth() === month && item[dateField]?.getFullYear() === year;
+const isPredictedForPeriod = getPeriodFilter('PrevisaoConclusao');
+const isConcludedInPeriod = getPeriodFilter('ConcluidaEm');
+
+let onboardingClients = clients.filter(c => normalizeText(c.Fase) === 'onboarding');
+
+if (teamView === 'syneco') {
+onboardingClients = onboardingClients.filter(c => normalizeText(c.Cliente).includes('syneco'));
+} else if (teamView === 'outros') {
+onboardingClients = onboardingClients.filter(c => !normalizeText(c.Cliente).includes('syneco'));
+}
+
+if (selectedISM !== 'Todos') {
+onboardingClients = onboardingClients.filter(c => c.ISM === selectedISM);
+}
+
+metrics['onb-total-clientes'] = onboardingClients;
+const onboardingClientSet = new Set(onboardingClients.map(c => (c.Cliente || '').trim().toLowerCase()));
+
+const relevantActivities = activities.filter(a => onboardingClientSet.has(a.ClienteCompleto));
+const concludedActivities = relevantActivities.filter(isConcludedInPeriod);
+const predictedActivities = relevantActivities.filter(isPredictedForPeriod);
+
+const validContactKeywords = ['e-mail', 'ligacao', 'reuniao', 'whatsapp', 'call sponsor'];
+const isCountableContact = (a) => {
+const activityType = normalizeText(a['Tipo de Atividade'] || a['Tipo de atividade'] || a['Tipo']);
+return validContactKeywords.some(type => activityType.includes(type));
+};
+
+const contacts = concludedActivities.filter(isCountableContact);
+const uniqueClientContactsMap = new Map();
+contacts.forEach(activity => uniqueClientContactsMap.set(activity.ClienteCompleto, activity));
+metrics['onb-clientes-contatados'] = Array.from(uniqueClientContactsMap.values());
+
+const callKeywords = ['ligacao', 'reuniao', 'call sponsor'];
+metrics['onb-contato-ligacao'] = contacts.filter(a => callKeywords.some(k => normalizeText(a['Tipo de Atividade'] || a['Tipo de atividade'] || a['Tipo']).includes(k)));
+metrics['onb-contato-email'] = contacts.filter(a => !callKeywords.some(k => normalizeText(a['Tipo de Atividade'] || a['Tipo de atividade'] || a['Tipo']).includes(k)));
+
+metrics['onb-atividades-previstas'] = predictedActivities;
+metrics['onb-atividades-concluidas'] = concludedActivities;
+
+return metrics;
+};
+
+const calculateOverdueMetrics = (activities, selectedCS) => {
+const metrics = { overdueActivities: {} };
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const csActivities = selectedCS === 'Todos'
+? activities
+: activities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
+
+const overdue = csActivities.filter(a => {
+const dueDate = a.PrevisaoConclusao;
+return !a.ConcluidaEm && dueDate && dueDate < today;
+});
+
+const playbookDefs = {
+'plano': { p: 'plano de acao', a: 'analise do cenario do cliente' },
+'adocao': { p: null, a: ["revisao da adocao - sponsor (mid/enterprise)","revisao da adocao - ku (mid/enterprise)","revisao da adocao - ku (smb)"] },
+'reunioes-qbr': { p: null, a: "ligacao de sensibilizacao com o sponsor" },
+'planos-sucesso': { p: null, a: "plano de sucesso desenvolvido" },
+'followup': { p: 'pos fechamento de loop cs', a: 'follow-up 1' },
+'discovery': { p: 'discovery potencial', a: 'contato com o cliente' },
+'engajamento-smb': { p: 'contato consolidado', a: 'contato com o cliente' },
+'baixo-engajamento-mid': { p: null, a: "cliente com baixo engajamento - mid/enter" }
+};
+
+for (const [key, def] of Object.entries(playbookDefs)) {
+let filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
+
+if (key === 'plano') {
+filterFn = (item) => {
+const atividadeNormalizada = normalizeText(item.Atividade);
+const playbookNormalizado = normalizeText(item.Playbook);
+const isPlanoOriginal = playbookNormalizado.includes(def.p) && atividadeNormalizada.includes(def.a);
+const isAlertaSuporte = atividadeNormalizada.startsWith('alerta suporte');
+return isPlanoOriginal || isAlertaSuporte;
+};
+}
+
+metrics.overdueActivities[key] = overdue.filter(filterFn);
+}
+
+return metrics;
+};
+
+const renderOverdueView = () => {
+if (rawActivities.length === 0) return;
+
+const selectedCS = selectCS.value;
+const overdueGrid = document.getElementById('overdue-grid-container');
+const overdueMetrics = calculateOverdueMetrics(rawActivities, selectedCS);
+
+let html = '';
+const playbookTitles = {
+'plano': 'Planos de Ação', 'adocao': 'Atividades de Adoção', 'followup': 'Follow-Up', 'discovery': 'Discovery',
+'reunioes-qbr': 'Reuniões de QBR', 'planos-sucesso': 'Planos de Sucesso', 'engajamento-smb': 'Engajamento (Contato Consolidado)',
+'baixo-engajamento-mid': 'Baixo Engajamento (MID/ENT)'
+};
+
+let totalOverdue = 0;
+const metricDataMap = {};
+for (const key in playbookTitles) {
+const activities = overdueMetrics.overdueActivities[key] || [];
+totalOverdue += activities.length;
+if (activities.length > 0) {
+const metricId = `overdue-${key}`;
+metricDataMap[metricId] = activities;
+
+html += `
+                       <div class="card">
+                           <h3>${playbookTitles[key]}</h3>
+                           <div class="card-content">
+                               <div class="metric overdue-metric" style="border-top: none; padding-top: 0; margin-top: 0;" data-metric-id="${metricId}" data-metric-title="Atrasadas: ${playbookTitles[key]}">
+                                   <span class="metric-label"><i class="fas fa-exclamation-triangle"></i> Total Atrasado:</span>
+                                   <span class="metric-value danger" style="font-size: 2rem;">${activities.length}</span>
+                               </div>
+                           </div>
+                       </div>
+                   `;
+}
+}
+
+if (totalOverdue === 0) {
+overdueGrid.innerHTML = `<div class="loader" style="color: var(--secondary-color); border-color: var(--secondary-color);"><i class="fas fa-check-circle" style="margin-right: 10px;"></i>Nenhuma atividade atrasada para o filtro selecionado!</div>`;
+} else {
+overdueGrid.innerHTML = html;
+document.querySelectorAll('#overdue-grid-container .metric').forEach(el => {
+el.addEventListener('click', () => {
+const metricId = el.dataset.metricId;
+const title = el.dataset.metricTitle;
+const data = metricDataMap[metricId];
+
+if(data && data.length > 0) {
+detailsModal.querySelector('#modal-title').textContent = title;
+const modalBody = detailsModal.querySelector('#modal-body');
+const searchInput = detailsModal.querySelector('#modal-search-input');
+
+const renderTable = (tableData) => {
+modalBody.innerHTML = createHtmlTable(tableData);
+};
+
+searchInput.value = '';
+searchInput.oninput = () => {
+const searchTerm = normalizeText(searchInput.value);
+if (!searchTerm) {
+renderTable(data);
+return;
+}
+const filteredData = data.filter(row => Object.values(row).some(value => normalizeText(String(value)).includes(searchTerm)));
+renderTable(filteredData);
+};
+
+renderTable(data);
+showModal(detailsModal);
+} else {
+alert("Não há dados detalhados para esta métrica.");
+}
+});
+});
+}
+};
+
+const calculateMetricsForPeriod = (month, year, activities, clients, selectedCS, includeOnboarding) => {
+const metrics = {};
+
+const startOfPeriod = new Date(Date.UTC(year, month, 1));
+
+const isConcludedInPeriod = (item) => item.ConcluidaEm?.getUTCMonth() === month && item.ConcluidaEm?.getUTCFullYear() === year;
+
+const isPredictedForPeriod = (activity) => {
+const isDueInPeriod = activity.PrevisaoConclusao?.getUTCMonth() === month && activity.PrevisaoConclusao?.getUTCFullYear() === year;
+const notCompletedBeforePeriod = !activity.ConcluidaEm || activity.ConcluidaEm >= startOfPeriod;
+return isDueInPeriod && notCompletedBeforePeriod;
+};
+
+const isOverdue = (activity) => activity.PrevisaoConclusao && activity.PrevisaoConclusao < startOfPeriod;
+
+const clientOwnerMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), { cs: cli.CS, fase: normalizeText(cli.Fase || '') }]));
+
+const clientsForPeriod = includeOnboarding ? clients : clients.filter(c => normalizeText(c.Fase) !== 'onboarding');
+
+const allConcludedActivitiesInPortfolio = rawActivities
+.filter(isConcludedInPeriod)
+.filter(a => clients.some(c => (c.Cliente || '').trim().toLowerCase() === a.ClienteCompleto));
+
+let csRealizedActivities = [];
+let onboardingRealizedActivities = [];
+
+if (selectedCS === 'Todos') {
+allConcludedActivitiesInPortfolio.forEach(activity => {
+const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+if (clientInfo?.fase === 'onboarding') onboardingRealizedActivities.push(activity);
+else csRealizedActivities.push(activity);
+});
+} else {
+allConcludedActivitiesInPortfolio.forEach(activity => {
+const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+const activityOwner = (activity['Responsável'] || '').trim();
+const isClientOnboarding = clientInfo?.fase === 'onboarding';
+
+if (isClientOnboarding && activityOwner === selectedCS) csRealizedActivities.push(activity);
+else if (isClientOnboarding) onboardingRealizedActivities.push(activity);
+else if (activityOwner === selectedCS) csRealizedActivities.push(activity);
+});
+}
+
+const combinedRealizedActivities = [...csRealizedActivities, ...onboardingRealizedActivities];
+
+const playbookDefs = {
+'plano': { p: 'plano de acao', a: 'analise do cenario do cliente' },
+'adocao': { p: null, a: ["revisao da adocao - sponsor (mid/enterprise)","revisao da adocao - ku (mid/enterprise)","revisao da adocao - ku (smb)"] },
+'reunioes-qbr': { p: null, a: "ligacao de sensibilizacao com o sponsor" },
+'planos-sucesso': { p: null, a: "plano de sucesso desenvolvido" },
+'followup': { p: 'pos fechamento de loop cs', a: 'follow-up 1' },
+'discovery': { p: 'discovery potencial', a: 'contato com o cliente' },
+'engajamento-smb': { p: 'contato consolidado', a: 'contato com o cliente' },
+'baixo-engajamento-mid': { p: null, a: "cliente com baixo engajamento - mid/enter" }
+};
+
+for (const [key, def] of Object.entries(playbookDefs)) {
+let filterFn;
+
+if (key === 'plano') {
+filterFn = (item) => {
+const atividadeNormalizada = normalizeText(item.Atividade);
+const playbookNormalizado = normalizeText(item.Playbook);
+const isPlanoOriginal = playbookNormalizado.includes(def.p) && atividadeNormalizada.includes(def.a);
+const isAlertaSuporte = atividadeNormalizada.startsWith('alerta suporte');
+return isPlanoOriginal || isAlertaSuporte;
+};
+} else {
+filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
+}
+
+const totalRealizadoList = combinedRealizedActivities.filter(filterFn);
+metrics[`${key}-atrasado-concluido`] = totalRealizadoList.filter(isOverdue);
+metrics[`${key}-realizado`] = totalRealizadoList.filter(a => !isOverdue(a));
+}
+
+const validContactKeywords = ['e-mail', 'ligacao', 'reuniao', 'whatsapp', 'call sponsor'];
+const isCountableContact = (a) => {
+const activityType = normalizeText(a['Tipo de Atividade'] || a['Tipo de atividade'] || a['Tipo']);
+const activityName = normalizeText(a.Atividade || '');
+return !activityName.includes('regra') && (validContactKeywords.some(type => activityType.includes(type)) || activityName.startsWith('whatsapp octadesk'));
+};
+
+const csContactActivities = csRealizedActivities.filter(isCountableContact);
+const onboardingContactActivities = onboardingRealizedActivities.filter(isCountableContact);
+
+let contactsForCoverage = [...csContactActivities];
+if (includeOnboarding) {
+contactsForCoverage = [...contactsForCoverage, ...onboardingContactActivities];
+}
+const uniqueClientContactsMap = new Map();
+contactsForCoverage.forEach(activity => uniqueClientContactsMap.set(activity.ClienteCompleto, activity));
+metrics['cob-carteira'] = Array.from(uniqueClientContactsMap.values());
+
+const callKeywords = ['ligacao', 'reuniao', 'call sponsor'];
+const emailKeywords = ['e-mail', 'whatsapp'];
+const prioritizedCsContacts = new Map();
+csContactActivities.forEach(activity => {
+const clientKey = activity.ClienteCompleto; if (!clientKey) return;
+const activityType = normalizeText(activity['Tipo de Atividade'] || activity['Tipo de atividade'] || a['Tipo']);
+let currentCategory = '';
+if (callKeywords.some(k => activityType.includes(k))) currentCategory = 'call';
+else if (emailKeywords.some(k => activityType.includes(k))) currentCategory = 'email';
+if (currentCategory === 'call') prioritizedCsContacts.set(clientKey, { activity, category: 'call' });
+else if (currentCategory === 'email' && (!prioritizedCsContacts.has(clientKey) || prioritizedCsContacts.get(clientKey).category !== 'call')) prioritizedCsContacts.set(clientKey, { activity, category: 'email' });
+});
+const finalCsContactList = Array.from(prioritizedCsContacts.values());
+metrics['contato-ligacao'] = finalCsContactList.filter(item => item.category === 'call').map(item => item.activity);
+metrics['contato-email'] = finalCsContactList.filter(item => item.category === 'email').map(item => item.activity);
+
+const prioritizedOnboardingContacts = new Map();
+onboardingContactActivities.forEach(activity => {
+const clientKey = activity.ClienteCompleto; if (!clientKey) return;
+prioritizedOnboardingContacts.set(clientKey, activity);
+});
+metrics['onboarding-contacts-display'] = Array.from(prioritizedOnboardingContacts.values());
+
+const ligacaoClientSet = new Set(metrics['contato-ligacao'].map(a => a.ClienteCompleto));
+const smbConcluidoList = (metrics['engajamento-smb-realizado'] || []).concat(metrics['engajamento-smb-atrasado-concluido'] || []);
+const intersectionList = smbConcluidoList.filter(a => ligacaoClientSet.has(a.ClienteCompleto));
+metrics['ligacao-com-consolidado'] = new Set(intersectionList.map(a => a.ClienteCompleto)).size;
+
+metrics['total-clientes-unicos-cs'] = clientsForPeriod.length;
+metrics['total-clientes'] = clientsForPeriod;
+const senseScores = clientsForPeriod.map(c => parseFloat(c['Sense Score'])).filter(s => !isNaN(s) && s !== null);
+metrics['sensescore-avg'] = senseScores.length > 0 ? senseScores.reduce((acc, val) => acc + val, 0) / senseScores.length : 0;
+
+const applyOwnershipRule = (activity) => {
+const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+if (!clientInfo) return false;
+if (selectedCS === 'Todos') return true;
+return clientInfo.cs === selectedCS;
+};
+
+let activitiesByCS_previstos = rawActivities
+.filter(a => clients.some(c => (c.Cliente || '').trim().toLowerCase() === a.ClienteCompleto))
+.filter(applyOwnershipRule);
+
+if (!includeOnboarding) {
+activitiesByCS_previstos = activitiesByCS_previstos.filter(activity => {
+const clientInfo = clientOwnerMap.get(activity.ClienteCompleto);
+return clientInfo?.fase !== 'onboarding';
+});
+}
+
+for (const [key, def] of Object.entries(playbookDefs)) {
+let filterFn;
+
+if (key === 'plano') {
+filterFn = (item) => {
+const atividadeNormalizada = normalizeText(item.Atividade);
+const playbookNormalizado = normalizeText(item.Playbook);
+const isPlanoOriginal = playbookNormalizado.includes(def.p) && atividadeNormalizada.includes(def.a);
+const isAlertaSuporte = atividadeNormalizada.startsWith('alerta suporte');
+return isPlanoOriginal || isAlertaSuporte;
+};
+} else {
+filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
+}
+
+metrics[`${key}-previsto`] = activitiesByCS_previstos.filter(filterFn).filter(isPredictedForPeriod);
+}
+
+const uniqueSmbContacts = new Map();
+smbConcluidoList.forEach(a => {
+const status = normalizeText(a['Categoria']);
+if (status === 'engajado' || status === 'desengajado') {
+uniqueSmbContacts.set(a.ClienteCompleto, { activity: a, status: status });
+}
+});
+const finalSmbList = Array.from(uniqueSmbContacts.values());
+metrics['engajamento-smb-engajado'] = finalSmbList.filter(item => item.status === 'engajado').map(item => item.activity);
+metrics['engajamento-smb-desengajado'] = finalSmbList.filter(item => item.status === 'desengajado').map(item => item.activity);
+
+const clientesContatados = metrics['cob-carteira'] || [];
+
+metrics['modelo-negocio-preenchido'] = clientesContatados.reduce((acc, atividade) => {
+const clienteData = rawClients.find(c => (c.Cliente || '').trim().toLowerCase() === atividade.ClienteCompleto);
+if (clienteData && clienteData['Modelo de negócio'] !== undefined && clienteData['Modelo de negócio'] !== null && String(clienteData['Modelo de negócio']).trim() !== '') {
+acc.push({
+...atividade,
+'Modelo de Negócio': clienteData['Modelo de negócio']
+});
+}
+return acc;
+}, []);
+
+metrics['cliente-potencial-preenchido'] = clientesContatados.reduce((acc, atividade) => {
+const clienteData = rawClients.find(c => (c.Cliente || '').trim().toLowerCase() === atividade.ClienteCompleto);
+if (clienteData && clienteData['Potencial'] !== undefined && clienteData['Potencial'] !== null && String(clienteData['Potencial']).trim() !== '') {
+acc.push({
+...atividade,
+'Potencial Mapeado': clienteData['Potencial']
+});
+}
+return acc;
+}, []);
+
+const selectedQuarter = Math.floor(month / 3);
+const isConcludedInQuarter = (item) => item.ConcluidaEm && Math.floor(item.ConcluidaEm.getMonth() / 3) === selectedQuarter && item.ConcluidaEm.getFullYear() === year;
+const eligibleClientSet = new Set(clients.map(c => (c.Cliente || '').trim().toLowerCase()));
+
+metrics['total-labs-eligible'] = clients.length;
+
+metrics['ska-labs-realizado-list'] = [...new Map(
+rawActivities
+.filter(isConcludedInQuarter)
+.filter(a => normalizeText(a.Atividade).includes('participou do ska labs'))
+.filter(a => eligibleClientSet.has(a.ClienteCompleto))
+.map(a => [a.ClienteCompleto, a])
+).values()];
+
+return metrics;
+};
 </script>
 </body>
 </html>
