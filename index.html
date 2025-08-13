@@ -11,11 +11,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 /*
-       -- REESTILIZAÇÃO VISUAL COMPLETA --
-       O código CSS abaixo foi totalmente reescrito para criar uma interface mais moderna,
-       atraente e dinâmica, conforme solicitado. Nenhuma funcionalidade ou ID utilizado
-       pelo JavaScript foi alterado. O foco foi em layout, cores, tipografia e interatividade.
-       */
        -- REESTILIZAÇÃO VISUAL COMPLETA --
        O código CSS abaixo foi totalmente reescrito para criar uma interface mais moderna,
        atraente e dinâmica, conforme solicitado. Nenhuma funcionalidade ou ID utilizado
@@ -272,7 +267,6 @@ outline: none;
 border-color: var(--primary-color);
 box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 30%, transparent);
 }
-body.light-theme .control-group input[type="file"], 
 body.light-theme .control-group input[type="file"], 
 body.light-theme .control-group select { background-color: #FFFFFF; }
 
@@ -609,8 +603,6 @@ font-size: 0.9rem; font-weight: 500;
 color: var(--warning-color);
 }
 .overdue-metric .metric-label .fa-history,
-.overdue-metric .metric-label .fa-exclamation-triangle { 
-margin-right: 6px; 
 .overdue-metric .metric-label .fa-exclamation-triangle { 
 margin-right: 6px; 
 }
@@ -750,7 +742,6 @@ data-logo_alignment="left">
 <div class="control-group"><label for="select-year"><i class="fas fa-calendar-week"></i> Ano</label><select id="select-year"></select></div>
 <div class="control-group"><label for="select-month"><i class="fas fa-calendar-alt"></i> Mês</label><select id="select-month"></select></div>
 <div class="control-group"><label for="select-cs"><i class="fas fa-user-tie"></i> CS</label><select id="select-cs" disabled><option>Aguardando...</option></select></div>
-<div class="control-group"><label for="select-squad"><i class="fas fa-users"></i> Squad</label><select id="select-squad" disabled><option>Aguardando...</option></select></div>
 <div id="squad-filter-group" class="control-group">
     <label for="select-squad"><i class="fas fa-users"></i> Squad</label>
     <select id="select-squad" disabled><option>Aguardando...</option></select>
@@ -1009,11 +1000,6 @@ localStorage.removeItem('googleUserToken');
 // O Dashboard só inicializa após o login
 function initializeDashboard() {
 /*
-       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-       Sempre que uma alteração funcional for implementada neste script,
-       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-       */
        -- INSTRUÇÃO PARA ATUALIZAÇÃO --
        Sempre que uma alteração funcional for implementada neste script,
        lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
@@ -1124,7 +1110,6 @@ let rawActivities = [], rawClients = [];
 let dataStore = {};
 let onboardingDataStore = {};
 let appGoals = {};
-let csToSquadMap = new Map(); // ADICIONE ESTA LINHA
 let csToSquadMap = new Map();
 const defaultGoals = { sensescore: 85, labs: 10, coverage: 40, qbr: 5, successplan: 5, engagement: 20 };
 
@@ -1248,59 +1233,57 @@ const buildCsToSquadMap = () => {
 };
 
 const processInitialData = () => {
-statusMessage.textContent = 'Processando dados...';
+    statusMessage.textContent = 'Processando dados...';
 
-const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
+    const clienteMap = new Map(rawClients.map(cli => [(cli.Cliente || '').trim().toLowerCase(), cli]));
 
-rawActivities = rawActivities.map(ativ => {
-const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
-const clienteInfo = clienteMap.get(clienteKey) || {};
-return { 
-...ativ, 
-ClienteCompleto: clienteKey, 
-Segmento: clienteInfo.Segmento, 
-CS: clienteInfo.CS,
-Squad: clienteInfo['Squad CS'],
-Fase: clienteInfo.Fase,
-ISM: clienteInfo.ISM,
-PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
-ConcluidaEm: parseDate(ativ['Concluída em']) 
-};
-});
+    rawActivities = rawActivities.map(ativ => {
+        const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
+        const clienteInfo = clienteMap.get(clienteKey) || {};
+        return { 
+            ...ativ, 
+            ClienteCompleto: clienteKey, 
+            Segmento: clienteInfo.Segmento, 
+            CS: clienteInfo.CS,
+            Squad: clienteInfo['Squad CS'],
+            Fase: clienteInfo.Fase,
+            ISM: clienteInfo.ISM,
+            PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
+            ConcluidaEm: parseDate(ativ['Concluída em']) 
+        };
+    });
 
     if (currentUser.isManager) {
         buildCsToSquadMap();
     }
 
-populateFilters();
+    populateFilters();
 
-if (!currentUser.isManager) {
-const selectedCS = selectCS.value;
-if (selectedCS) {
-const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
-autoSelectSegment(clientsOfLoggedInUser);
-}
-}
-buildCsToSquadMap();
+    if (!currentUser.isManager) {
+        const selectedCS = selectCS.value;
+        if (selectedCS) {
+            const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
+            autoSelectSegment(clientsOfLoggedInUser);
+        }
+    }
 
-renderDataTables();
-statusMessage.style.display = 'none';
-dashboard.style.display = 'block';
-onboardingDashboard.style.display = 'block';
-tabsContainer.style.display = 'flex';
-const selectSquad = document.getElementById('select-squad');
-[selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
-
-if (!currentUser.isManager) {
-selectCS.disabled = true;
-}
-
-[selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
-
-updateDashboard();
-renderOverdueView();
+    renderDataTables();
+    statusMessage.style.display = 'none';
+    dashboard.style.display = 'block';
+    onboardingDashboard.style.display = 'block';
+    tabsContainer.style.display = 'flex';
+    const selectSquad = document.getElementById('select-squad');
+    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+    
+    if (!currentUser.isManager) {
+        selectCS.disabled = true;
+    }
+    
+    [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
+    
+    updateDashboard();
+    renderOverdueView();
 };
-       
 
 const updateIsmFilter = () => {
 const teamView = selectOnboardingTeam.value;
@@ -1324,47 +1307,7 @@ option.textContent = ism;
 selectISM.appendChild(option);
 });
 };
-// ADICIONE ESTA NOVA FUNÇÃO COMPLETA
-const buildCsToSquadMap = () => {
-    // Primeiro, pegamos uma lista de todos os CSs únicos
-    const allCSs = [...new Set(rawClients.map(c => c.CS).filter(Boolean))];
 
-    // Para cada CS, vamos descobrir qual é o seu Squad principal
-    allCSs.forEach(csName => {
-        // Filtra todos os clientes daquele CS
-        const clientsOfCS = rawClients.filter(c => c.CS === csName);
-        
-        // Se o CS não tiver clientes com Squad definido, pula para o próximo
-        if (!clientsOfCS.some(c => c['Squad CS'])) {
-            return;
-        }
-
-        // Conta quantos clientes existem em cada Squad para este CS
-        const squadCounts = clientsOfCS.reduce((acc, client) => {
-            const squad = client['Squad CS'];
-            if (squad) {
-                acc[squad] = (acc[squad] || 0) + 1;
-            }
-            return acc;
-        }, {});
-
-        // Encontra o Squad com a maior contagem de clientes
-        let majoritySquad = '';
-        let maxCount = 0;
-        for (const squad in squadCounts) {
-            if (squadCounts[squad] > maxCount) {
-                maxCount = squadCounts[squad];
-                majoritySquad = squad;
-            }
-        }
-        
-        // Armazena o resultado no nosso Map
-        if (majoritySquad) {
-            csToSquadMap.set(csName, majoritySquad);
-        }
-    });
-};
-       
 const populateFilters = () => {
 const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
 const selectSquad = document.getElementById('select-squad');
@@ -1383,23 +1326,14 @@ selectCS.appendChild(option);
 });
 
 if (!currentUser.isManager) {
-const userFirstName = currentUser.name.split(' ')[0];
-const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
-if (matchingCS) {
-selectCS.value = matchingCS;
-}
-selectCS.disabled = true;
+    const userFirstName = currentUser.name.split(' ')[0];
+    const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
+    if (matchingCS) {
+        selectCS.value = matchingCS;
+    }
+    selectCS.disabled = true;
 }
 
-const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
-selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
-const sortedSquads = [...squadSet].sort();
-sortedSquads.forEach(squad => {
-    const option = document.createElement('option');
-    option.value = squad;
-    option.textContent = squad;
-    selectSquad.appendChild(option);
-});
 if (currentUser.isManager) {
     const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
     selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
@@ -1572,16 +1506,16 @@ const metricId = `overdue-${key}`;
 metricDataMap[metricId] = activities;
 
 html += `
-                      <div class="card">
-                          <h3>${playbookTitles[key]}</h3>
-                          <div class="card-content">
-                              <div class="metric overdue-metric" style="border-top: none; padding-top: 0; margin-top: 0;" data-metric-id="${metricId}" data-metric-title="Atrasadas: ${playbookTitles[key]}">
-                                  <span class="metric-label"><i class="fas fa-exclamation-triangle"></i> Total Atrasado:</span>
-                                  <span class="metric-value danger" style="font-size: 2rem;">${activities.length}</span>
-                              </div>
-                          </div>
-                      </div>
-                  `;
+                       <div class="card">
+                           <h3>${playbookTitles[key]}</h3>
+                           <div class="card-content">
+                               <div class="metric overdue-metric" style="border-top: none; padding-top: 0; margin-top: 0;" data-metric-id="${metricId}" data-metric-title="Atrasadas: ${playbookTitles[key]}">
+                                   <span class="metric-label"><i class="fas fa-exclamation-triangle"></i> Total Atrasado:</span>
+                                   <span class="metric-value danger" style="font-size: 2rem;">${activities.length}</span>
+                               </div>
+                           </div>
+                       </div>
+                   `;
 }
 }
 
@@ -1905,24 +1839,24 @@ dashboard.style.display = 'none';
 periodView.style.display = 'block';
 
 const avgCoverageCard = `
-              <div class="card">
-                  <h3>Média de Cobertura de Carteira</h3>
-                  <div class="card-content">
-                      <div class="metric">
-                          <span class="metric-label">Período Analisado:</span>
-                          <span class="metric-value">${periodName}</span>
-                      </div>
-                      <div class="metric">
-                          <span class="metric-label">Média Mensal de Cobertura:</span>
-                          <span class="metric-value" style="font-size: 2.5rem; color: var(--primary-color);">${periodData.averageCoverage.toFixed(1)}%</span>
-                      </div>
-                      <div class="metric">
-                          <span class="metric-label">Total de Clientes Únicos no Período:</span>
-                          <span class="metric-value">${periodData.totalUniqueClients}</span>
-                      </div>
-                  </div>
-              </div>
-          `;
+               <div class="card">
+                   <h3>Média de Cobertura de Carteira</h3>
+                   <div class="card-content">
+                       <div class="metric">
+                           <span class="metric-label">Período Analisado:</span>
+                           <span class="metric-value">${periodName}</span>
+                       </div>
+                       <div class="metric">
+                           <span class="metric-label">Média Mensal de Cobertura:</span>
+                           <span class="metric-value" style="font-size: 2.5rem; color: var(--primary-color);">${periodData.averageCoverage.toFixed(1)}%</span>
+                       </div>
+                       <div class="metric">
+                           <span class="metric-label">Total de Clientes Únicos no Período:</span>
+                           <span class="metric-value">${periodData.totalUniqueClients}</span>
+                       </div>
+                   </div>
+               </div>
+           `;
 
 let playbookCardsHtml = '';
 const playbookTitles = { 'plano': 'Planos de Ação', 'adocao': 'Atividades de Adoção', 'followup': 'Follow-Up', 'discovery': 'Discovery', 'reunioes-qbr': 'Reuniões de QBR', 'planos-sucesso': 'Planos de Sucesso', 'engajamento-smb': 'Engajamento (Contato Consolidado)', 'baixo-engajamento-mid': 'Baixo Engajamento (MID/ENT)' };
@@ -1931,59 +1865,54 @@ for (const key in playbookTitles) {
 const data = periodData.playbookTotals[key];
 if (data && (data.previsto > 0 || data.realizado > 0)) {
 playbookCardsHtml += `
-                      <div class="card">
-                          <h3>Total: ${playbookTitles[key]}</h3>
-                          <div class="card-content">
-                              <div class="metric">
-                                  <span class="metric-label">Total Previsto no Período:</span>
-                                  <span class="metric-value">${data.previsto}</span>
-                              </div>
-                              <div class="metric">
-                                  <span class="metric-label">Total Realizado no Período:</span>
-                                  <span class="metric-value success">${data.realizado}</span>
-                              </div>
-                          </div>
-                      </div>
-                  `;
+                       <div class="card">
+                           <h3>Total: ${playbookTitles[key]}</h3>
+                           <div class="card-content">
+                               <div class="metric">
+                                   <span class="metric-label">Total Previsto no Período:</span>
+                                   <span class="metric-value">${data.previsto}</span>
+                               </div>
+                               <div class="metric">
+                                   <span class="metric-label">Total Realizado no Período:</span>
+                                   <span class="metric-value success">${data.realizado}</span>
+                               </div>
+                           </div>
+                       </div>
+                   `;
 }
 }
 
 periodView.innerHTML = `
-              <div class="metric-group">
-                  <h2 class="group-title">Resumo do Período: ${periodName}</h2>
-                  <div class="group-content">
-                      ${avgCoverageCard}
-                      ${playbookCardsHtml}
-                  </div>
-              </div>
-          `;
+               <div class="metric-group">
+                   <h2 class="group-title">Resumo do Período: ${periodName}</h2>
+                   <div class="group-content">
+                       ${avgCoverageCard}
+                       ${playbookCardsHtml}
+                   </div>
+               </div>
+           `;
 };
 
 const updateDashboard = () => {
-if (rawClients.length === 0 || rawActivities.length === 0) return;
+    if (rawClients.length === 0 || rawActivities.length === 0) return;
 
-const period = selectPeriod.value;
-const selectedYear = parseInt(selectYear.value, 10);
-const exportCsvBtn = document.getElementById('export-csv-button');
-const exportHtmlBtn = document.getElementById('export-html-button');
+    const period = selectPeriod.value;
+    const selectedYear = parseInt(selectYear.value, 10);
+    const exportCsvBtn = document.getElementById('export-csv-button');
+    const exportHtmlBtn = document.getElementById('export-html-button');
 
-if (period === 'monthly') {
-periodView.style.display = 'none';
-dashboard.style.display = 'block';
-exportCsvBtn.disabled = false;
-exportHtmlBtn.disabled = false;
+    if (period === 'monthly') {
+        periodView.style.display = 'none';
+        dashboard.style.display = 'block';
+        exportCsvBtn.disabled = false;
+        exportHtmlBtn.disabled = false;
 
-const includeOnboarding = onboardingToggle.checked;
-const mesSelecionado = parseInt(selectMonth.value, 10);
-const anoSelecionado = parseInt(selectYear.value, 10);
+        const includeOnboarding = onboardingToggle.checked;
+        const mesSelecionado = parseInt(selectMonth.value, 10);
+        const anoSelecionado = parseInt(selectYear.value, 10);
 
-const selectedCS = selectCS.value;
-        const selectedSquad = document.getElementById('select-squad').value;
-let filteredClients = rawClients;
-
-        if (selectedSquad !== 'Todos') {
-            filteredClients = rawClients.filter(d => d['Squad CS'] === selectedSquad);
-        } else if (selectedCS !== 'Todos') {
+        const selectedCS = selectCS.value;
+        let filteredClients = rawClients;
         
         let csForCalc = selectedCS;
 
@@ -1997,71 +1926,70 @@ let filteredClients = rawClients;
             }
         } 
         else {
-filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
-}
+            filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
+        }
+        
+        dataStore = {};
+        Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, csForCalc, includeOnboarding));
 
-        const csForCalc = selectedSquad !== 'Todos' ? 'Todos' : selectedCS;
-dataStore = {};
-Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, csForCalc, includeOnboarding));
+        const selectedComparison = document.getElementById('select-comparison').value;
+        if (selectedComparison !== 'none') {
+            let compMes = mesSelecionado, compAno = anoSelecionado;
+            if (selectedComparison === 'prev_month') {
+                compMes--;
+                if (compMes < 0) { compMes = 11; compAno--; }
+            } else if (selectedComparison === 'prev_year') {
+                compAno--;
+            }
 
-const selectedComparison = document.getElementById('select-comparison').value;
-if (selectedComparison !== 'none') {
-let compMes = mesSelecionado, compAno = anoSelecionado;
-if (selectedComparison === 'prev_month') {
-compMes--;
-if (compMes < 0) { compMes = 11; compAno--; }
-} else if (selectedComparison === 'prev_year') {
-compAno--;
-}
+            const comparisonMetrics = calculateMetricsForPeriod(compMes, compAno, rawActivities, filteredClients, csForCalc, includeOnboarding);
+            Object.keys(comparisonMetrics).forEach(key => {
+                dataStore[`${key}_comp`] = comparisonMetrics[key];
+            });
+        }
 
-const comparisonMetrics = calculateMetricsForPeriod(compMes, compAno, rawActivities, filteredClients, csForCalc, includeOnboarding);
-Object.keys(comparisonMetrics).forEach(key => {
-dataStore[`${key}_comp`] = comparisonMetrics[key];
-});
-}
+        const activitiesByCS = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
+        const concludedInPeriodActivities = activitiesByCS.filter(a => a.ConcluidaEm?.getMonth() === mesSelecionado && a.ConcluidaEm?.getFullYear() === anoSelecionado);
+        const divergentActivities = concludedInPeriodActivities.filter(a => {
+            return a.CS && a.CS.trim() !== selectedCS && selectedCS !== 'Todos';
+        });
+        dataStore['divergent-activities'] = divergentActivities;
+        const divergenceMarker = document.getElementById('divergence-marker');
+        const divergenceText = document.getElementById('divergence-text');
+        const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
+        if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
+            divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
+            divergenceMarker.style.display = 'flex';
+        } else {
+            divergenceMarker.style.display = 'none';
+        }
 
-const activitiesByCS = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
-const concludedInPeriodActivities = activitiesByCS.filter(a => a.ConcluidaEm?.getMonth() === mesSelecionado && a.ConcluidaEm?.getFullYear() === anoSelecionado);
-const divergentActivities = concludedInPeriodActivities.filter(a => {
-return a.CS && a.CS.trim() !== selectedCS && selectedCS !== 'Todos';
-});
-dataStore['divergent-activities'] = divergentActivities;
-const divergenceMarker = document.getElementById('divergence-marker');
-const divergenceText = document.getElementById('divergence-text');
-const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
-divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
-divergenceMarker.style.display = 'flex';
-} else {
-divergenceMarker.style.display = 'none';
-}
+        renderOKRs();
+        renderOnboardingDashboard();
 
-renderOKRs();
-renderOnboardingDashboard();
+    } else {
+        exportCsvBtn.disabled = true;
+        exportHtmlBtn.disabled = true;
 
-} else {
-exportCsvBtn.disabled = true;
-exportHtmlBtn.disabled = true;
+        const includeOnboarding = onboardingToggle.checked;
+        const selectedCSValue = selectCS.value;
+        const dateRange = getPeriodDateRange(period, selectedYear);
+        const periodName = selectPeriod.options[selectPeriod.selectedIndex].text;
 
-const includeOnboarding = onboardingToggle.checked;
-const selectedCSValue = selectCS.value;
-const dateRange = getPeriodDateRange(period, selectedYear);
-const periodName = selectPeriod.options[selectPeriod.selectedIndex].text;
+        if (dateRange) {
+            statusMessage.textContent = `Calculando métricas para: ${periodName}...`;
+            statusMessage.style.display = 'block';
+            dashboard.style.display = 'none';
+            periodView.style.display = 'none';
+            document.getElementById('divergence-marker').style.display = 'none';
 
-if (dateRange) {
-statusMessage.textContent = `Calculando métricas para: ${periodName}...`;
-statusMessage.style.display = 'block';
-dashboard.style.display = 'none';
-periodView.style.display = 'none';
-document.getElementById('divergence-marker').style.display = 'none';
-
-setTimeout(() => {
-const periodData = calculateMetricsForDateRange(dateRange.start, dateRange.end, rawActivities, rawClients, selectedCSValue, includeOnboarding);
-renderPeriodView(periodData, periodName);
-statusMessage.style.display = 'none';
-}, 50);
-}
-}
+            setTimeout(() => {
+                const periodData = calculateMetricsForDateRange(dateRange.start, dateRange.end, rawActivities, rawClients, selectedCSValue, includeOnboarding);
+                renderPeriodView(periodData, periodName);
+                statusMessage.style.display = 'none';
+            }, 50);
+        }
+    }
 };
 
 
@@ -2087,56 +2015,56 @@ onboardingGeneralTitle.textContent = `Visão Geral: ${teamTitleMap[teamView]}`;
 onboardingActivitiesTitle.textContent = `Acompanhamento: ${teamTitleMap[teamView]}`;
 
 const cardGeral = `
-              <div class="card">
-                  <h3>Geral do Onboarding</h3>
-                  <div class="card-content">
-                      <div class="metric" data-metric-id="onb-total-clientes" data-metric-title="Total de Clientes em Onboarding">
-                          <span class="metric-label">Total de Clientes:</span>
-                          <span class="metric-value">${totalClientes}</span>
-                      </div>
-                       <div class="metric" data-metric-id="onb-clientes-contatados" data-metric-title="Clientes Contatados em Onboarding">
-                          <span class="metric-label">Clientes Contatados:</span>
-                          <span class="metric-value">${clientesContatados}</span>
-                      </div>
-                  </div>
-                   <div class="progress-bar-container" title="Cobertura de contatos na base de Onboarding: ${percCobertura.toFixed(1)}%">
-                      <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percCobertura.toFixed(1)}%;"></div></div>
-                      <span class="progress-percentage">${percCobertura.toFixed(1)}%</span>
-                  </div>
-              </div>`;
+               <div class="card">
+                   <h3>Geral do Onboarding</h3>
+                   <div class="card-content">
+                       <div class="metric" data-metric-id="onb-total-clientes" data-metric-title="Total de Clientes em Onboarding">
+                           <span class="metric-label">Total de Clientes:</span>
+                           <span class="metric-value">${totalClientes}</span>
+                       </div>
+                        <div class="metric" data-metric-id="onb-clientes-contatados" data-metric-title="Clientes Contatados em Onboarding">
+                           <span class="metric-label">Clientes Contatados:</span>
+                           <span class="metric-value">${clientesContatados}</span>
+                       </div>
+                   </div>
+                    <div class="progress-bar-container" title="Cobertura de contatos na base de Onboarding: ${percCobertura.toFixed(1)}%">
+                       <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percCobertura.toFixed(1)}%;"></div></div>
+                       <span class="progress-percentage">${percCobertura.toFixed(1)}%</span>
+                   </div>
+               </div>`;
 
 const cardContatos = `
-              <div class="card">
-                  <h3>Contatos em Onboarding (Mês)</h3>
-                  <div class="card-content">
-                      <div class="metric" data-metric-id="onb-contato-ligacao" data-metric-title="Contatos por Ligação/Reunião (Onboarding)">
-                          <span class="metric-label">📞 Ligação/Reunião:</span>
-                          <span class="metric-value">${(onboardingDataStore['onb-contato-ligacao'] || []).length}</span>
-                      </div>
-                      <div class="metric" data-metric-id="onb-contato-email" data-metric-title="Contatos por E-mail/Whatsapp (Onboarding)">
-                          <span class="metric-label">✉️ E-mail/Whatsapp:</span>
-                          <span class="metric-value">${(onboardingDataStore['onb-contato-email'] || []).length}</span>
-                      </div>
-                  </div>
-              </div>`;
+               <div class="card">
+                   <h3>Contatos em Onboarding (Mês)</h3>
+                   <div class="card-content">
+                       <div class="metric" data-metric-id="onb-contato-ligacao" data-metric-title="Contatos por Ligação/Reunião (Onboarding)">
+                           <span class="metric-label">📞 Ligação/Reunião:</span>
+                           <span class="metric-value">${(onboardingDataStore['onb-contato-ligacao'] || []).length}</span>
+                       </div>
+                       <div class="metric" data-metric-id="onb-contato-email" data-metric-title="Contatos por E-mail/Whatsapp (Onboarding)">
+                           <span class="metric-label">✉️ E-mail/Whatsapp:</span>
+                           <span class="metric-value">${(onboardingDataStore['onb-contato-email'] || []).length}</span>
+                       </div>
+                   </div>
+               </div>`;
 
 onboardingGeneralGrid.innerHTML = cardGeral + cardContatos;
 
 const cardAtividades = `
-               <div class="card">
-                  <h3>Atividades em Onboarding (Mês)</h3>
-                  <div class="card-content">
-                      <div class="metric" data-metric-id="onb-atividades-previstas" data-metric-title="Atividades Previstas (Onboarding)">
-                          <span class="metric-label">Previstas para o Mês:</span>
-                          <span class="metric-value">${(onboardingDataStore['onb-atividades-previstas'] || []).length}</span>
-                      </div>
-                      <div class="metric" data-metric-id="onb-atividades-concluidas" data-metric-title="Atividades Concluídas (Onboarding)">
-                          <span class="metric-label">Concluídas no Mês:</span>
-                          <span class="metric-value success">${(onboardingDataStore['onb-atividades-concluidas'] || []).length}</span>
-                      </div>
-                  </div>
-              </div>
-          `;
+                <div class="card">
+                   <h3>Atividades em Onboarding (Mês)</h3>
+                   <div class="card-content">
+                       <div class="metric" data-metric-id="onb-atividades-previstas" data-metric-title="Atividades Previstas (Onboarding)">
+                           <span class="metric-label">Previstas para o Mês:</span>
+                           <span class="metric-value">${(onboardingDataStore['onb-atividades-previstas'] || []).length}</span>
+                       </div>
+                       <div class="metric" data-metric-id="onb-atividades-concluidas" data-metric-title="Atividades Concluídas (Onboarding)">
+                           <span class="metric-label">Concluídas no Mês:</span>
+                           <span class="metric-value success">${(onboardingDataStore['onb-atividades-concluidas'] || []).length}</span>
+                       </div>
+                   </div>
+               </div>
+           `;
 
 onboardingActivitiesGrid.innerHTML = cardAtividades;
 };
@@ -2172,49 +2100,49 @@ const includeOnboarding = onboardingToggle.checked;
 const onboardingContacts = dataStore['onboarding-contacts-display'] || [];
 if (includeOnboarding && onboardingContacts.length > 0) {
 onboardingMetricHtml = `
-                  <div class="metric" data-metric-id="onboarding-contacts-display" data-metric-title="Contatos de Onboarding">
-                      <span class="metric-label"><i class="fas fa-user-plus" style="margin-right: 6px; color: var(--primary-color);"></i>Contatos Onboarding:</span>
-                      <span class="metric-value">${onboardingContacts.length}</span>
-                  </div>
-              `;
+                   <div class="metric" data-metric-id="onboarding-contacts-display" data-metric-title="Contatos de Onboarding">
+                       <span class="metric-label"><i class="fas fa-user-plus" style="margin-right: 6px; color: var(--primary-color);"></i>Contatos Onboarding:</span>
+                       <span class="metric-value">${onboardingContacts.length}</span>
+                   </div>
+               `;
 }
 
 const cardTiposDeContato = `
-              <div class="card">
-                  <h3>Tipos de Contato (Mês)</h3>
-                  <div class="card-content">
-                      <div class="metric" data-metric-id="contato-ligacao" data-metric-title="Contatos do CS por Ligação/Reunião">
-                          <span class="metric-label">📞 Ligação/Reunião (CS):</span>
-                          <span class="metric-value">
-                              ${(dataStore['contato-ligacao'] || []).length} 
-                              <span class="sub-metric" title="${(dataStore['ligacao-com-consolidado'] || 0)} destes contatos tiveram o playbook 'Contato Consolidado' realizado">
-                                 (<i class="fas fa-check-double" style="color: var(--secondary-color);"></i> ${(dataStore['ligacao-com-consolidado'] || 0)})
-                              </span>
-                          </span>
-                      </div>
-                      <div class="metric" data-metric-id="contato-email" data-metric-title="Contatos do CS por E-mail/Whatsapp">
-                          <span class="metric-label">✉️ E-mail/Whatsapp (CS):</span><span class="metric-value">${(dataStore['contato-email'] || []).length}</span>
-                      </div>
-                      ${onboardingMetricHtml}
-                  </div>
-              </div>`;
+               <div class="card">
+                   <h3>Tipos de Contato (Mês)</h3>
+                   <div class="card-content">
+                       <div class="metric" data-metric-id="contato-ligacao" data-metric-title="Contatos do CS por Ligação/Reunião">
+                           <span class="metric-label">📞 Ligação/Reunião (CS):</span>
+                           <span class="metric-value">
+                               ${(dataStore['contato-ligacao'] || []).length} 
+                               <span class="sub-metric" title="${(dataStore['ligacao-com-consolidado'] || 0)} destes contatos tiveram o playbook 'Contato Consolidado' realizado">
+                                  (<i class="fas fa-check-double" style="color: var(--secondary-color);"></i> ${(dataStore['ligacao-com-consolidado'] || 0)})
+                               </span>
+                           </span>
+                       </div>
+                       <div class="metric" data-metric-id="contato-email" data-metric-title="Contatos do CS por E-mail/Whatsapp">
+                           <span class="metric-label">✉️ E-mail/Whatsapp (CS):</span><span class="metric-value">${(dataStore['contato-email'] || []).length}</span>
+                       </div>
+                       ${onboardingMetricHtml}
+                   </div>
+               </div>`;
 
 generalGrid.innerHTML = `${createSimpleCard('Visão Geral da Carteira', 'total-clientes', 'Total de Clientes Únicos', (dataStore['total-clientes'] || []).length, 'cob-carteira', 'Clientes Contatados', clientesContatadosCount)} ${cardCobertura} ${senseScoreCard} ${cardTiposDeContato}`;
 
 playbookGrid.innerHTML = `
-              ${createPrevistoRealizadoCard('Atividades de Plano de Ação', (dataStore['plano-previsto'] || []).length, (dataStore['plano-realizado'] || []).length, 'plano', null, (dataStore['plano-atrasado-concluido'] || []).length)}
-              ${createPrevistoRealizadoCard('Atividades de Adoção', (dataStore['adocao-previsto'] || []).length, (dataStore['adocao-realizado'] || []).length, 'adocao', null, (dataStore['adocao-atrasado-concluido'] || []).length)}
-              ${followupCard}
-              ${(selectedSegmento !== 'MID/Enterprise') ? discoveryCard : ''}
-          `;
+               ${createPrevistoRealizadoCard('Atividades de Plano de Ação', (dataStore['plano-previsto'] || []).length, (dataStore['plano-realizado'] || []).length, 'plano', null, (dataStore['plano-atrasado-concluido'] || []).length)}
+               ${createPrevistoRealizadoCard('Atividades de Adoção', (dataStore['adocao-previsto'] || []).length, (dataStore['adocao-realizado'] || []).length, 'adocao', null, (dataStore['adocao-atrasado-concluido'] || []).length)}
+               ${followupCard}
+               ${(selectedSegmento !== 'MID/Enterprise') ? discoveryCard : ''}
+           `;
 
 let okrHtml = '';
 if (selectedSegmento === 'MID/Enterprise') {
 okrHtml = `
-                  ${createPrevistoRealizadoCard('Reuniões de QBR', (dataStore['reunioes-qbr-previsto'] || []).length, (dataStore['reunioes-qbr-realizado'] || []).length, 'reunioes-qbr', appGoals.qbr, (dataStore['reunioes-qbr-atrasado-concluido'] || []).length)}
-                  ${createPrevistoRealizadoCard('Planos de Sucesso', (dataStore['planos-sucesso-previsto'] || []).length, (dataStore['planos-sucesso-realizado'] || []).length, 'planos-sucesso', appGoals.successplan, (dataStore['planos-sucesso-atrasado-concluido'] || []).length)}
-                  ${createPrevistoRealizadoCard('Baixo Engajamento (MID/ENT)', (dataStore['baixo-engajamento-mid-previsto'] || []).length, (dataStore['baixo-engajamento-mid-realizado'] || []).length, 'baixo-engajamento-mid', null, (dataStore['baixo-engajamento-mid-atrasado-concluido'] || []).length)}
-                  ${labsCard}`;
+                   ${createPrevistoRealizadoCard('Reuniões de QBR', (dataStore['reunioes-qbr-previsto'] || []).length, (dataStore['reunioes-qbr-realizado'] || []).length, 'reunioes-qbr', appGoals.qbr, (dataStore['reunioes-qbr-atrasado-concluido'] || []).length)}
+                   ${createPrevistoRealizadoCard('Planos de Sucesso', (dataStore['planos-sucesso-previsto'] || []).length, (dataStore['planos-sucesso-realizado'] || []).length, 'planos-sucesso', appGoals.successplan, (dataStore['planos-sucesso-atrasado-concluido'] || []).length)}
+                   ${createPrevistoRealizadoCard('Baixo Engajamento (MID/ENT)', (dataStore['baixo-engajamento-mid-previsto'] || []).length, (dataStore['baixo-engajamento-mid-realizado'] || []).length, 'baixo-engajamento-mid', null, (dataStore['baixo-engajamento-mid-atrasado-concluido'] || []).length)}
+                   ${labsCard}`;
 } else { 
 const previstos = dataStore['engajamento-smb-previsto'] || [];
 const realizadosNoPrazo = dataStore['engajamento-smb-realizado'] || [];
@@ -2227,26 +2155,26 @@ const performancePerc = totalRealizado > 0 ? (engajados.length / totalRealizado)
 const realizadoVsPrevistoPerc = previstos.length > 0 ? (totalRealizado / previstos.length) * 100 : 0;
 
 const cardEngajamento = `
-                  <div class="card">
-                      <h3>Engajamento (Contato Consolidado)</h3>
-                      <div class="card-content">
-                          <div class="metric" data-metric-id="engajamento-smb-previsto" data-metric-title="Contatos Previstos (SMB)"><span class="metric-label">Previsto:</span><span class="metric-value">${previstos.length}</span></div>
-                          <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Total Realizado (SMB)">
-                              <span class="metric-label">Total Realizado:</span>
-                              <span class="metric-value">${totalRealizado} <span class="sub-metric" title="${realizadoVsPrevistoPerc.toFixed(0)}% do previsto foi realizado">(${realizadoVsPrevistoPerc.toFixed(0)}%)</span></span>
-                          </div>
-                          <div class="metric" data-metric-id="engajamento-smb-engajado" data-metric-title="Total Engajado (SMB)"><span class="metric-label">Total Engajado:</span><span class="metric-value success">${engajados.length}</span></div>
-                          <div class="metric" data-metric-id="engajamento-smb-desengajado" data-metric-title="Total Desengajado (SMB)"><span class="metric-label">Total Desengajado:</span><span class="metric-value danger">${desengajados.length}</span></div>
-                          <div class="metric">
-                              <span class="metric-label" style="font-weight: 600;">Meta de Performance:</span>
-                              <span class="metric-value" style="color: var(--primary-color);">${appGoals.engagement}%</span>
-                          </div>
-                      </div>
-                      <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados foram classificados como 'Engajado'">
-                          <div class="progress-bar"><div class="progress-bar-fill" style="width: ${performancePerc.toFixed(1)}%;"></div></div>
-                          <span class="progress-percentage">${performancePerc.toFixed(1)}%</span>
-                      </div>
-                  </div>`;
+                   <div class="card">
+                       <h3>Engajamento (Contato Consolidado)</h3>
+                       <div class="card-content">
+                           <div class="metric" data-metric-id="engajamento-smb-previsto" data-metric-title="Contatos Previstos (SMB)"><span class="metric-label">Previsto:</span><span class="metric-value">${previstos.length}</span></div>
+                           <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Total Realizado (SMB)">
+                               <span class="metric-label">Total Realizado:</span>
+                               <span class="metric-value">${totalRealizado} <span class="sub-metric" title="${realizadoVsPrevistoPerc.toFixed(0)}% do previsto foi realizado">(${realizadoVsPrevistoPerc.toFixed(0)}%)</span></span>
+                           </div>
+                           <div class="metric" data-metric-id="engajamento-smb-engajado" data-metric-title="Total Engajado (SMB)"><span class="metric-label">Total Engajado:</span><span class="metric-value success">${engajados.length}</span></div>
+                           <div class="metric" data-metric-id="engajamento-smb-desengajado" data-metric-title="Total Desengajado (SMB)"><span class="metric-label">Total Desengajado:</span><span class="metric-value danger">${desengajados.length}</span></div>
+                           <div class="metric">
+                               <span class="metric-label" style="font-weight: 600;">Meta de Performance:</span>
+                               <span class="metric-value" style="color: var(--primary-color);">${appGoals.engagement}%</span>
+                           </div>
+                       </div>
+                       <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados foram classificados como 'Engajado'">
+                           <div class="progress-bar"><div class="progress-bar-fill" style="width: ${performancePerc.toFixed(1)}%;"></div></div>
+                           <span class="progress-percentage">${performancePerc.toFixed(1)}%</span>
+                       </div>
+                   </div>`;
 okrHtml += cardEngajamento;
 
 const clientesContatadosBase = dataStore['cob-carteira'] || [];
@@ -2255,26 +2183,26 @@ if (selectedSegmento === 'SMB CAD') {
 const preenchidosModelo = dataStore['modelo-negocio-preenchido'] || [];
 const percModelo = clientesContatadosBase.length > 0 ? (preenchidosModelo.length / clientesContatadosBase.length) * 100 : 0;
 const cardModeloNegocio = `
-                      <div class="card">
-                          <h3>Adoção do Modelo de Negócio</h3>
-                          <div class="card-content">
-                              <div class="metric" data-metric-id="modelo-negocio-preenchido" data-metric-title="Clientes com Modelo Preenchido">
-                                  <span class="metric-label">Preenchido:</span>
-                                  <span class="metric-value success">${preenchidosModelo.length}</span>
-                              </div>
-                              <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
-                                  <span class="metric-label">Total Avaliado:</span>
-                                  <span class="metric-value">${clientesContatadosBase.length}</span>
-                              </div>
-                          </div>
-                           <div class="progress-bar-container" title="${percModelo.toFixed(1)}% dos clientes contatados possuem modelo de negócio definido">
-                              <div class="progress-bar">
-                                  <div class="progress-bar-fill" style="width: ${percModelo.toFixed(1)}%;"></div>
-                              </div>
-                              <span class="progress-percentage">${percModelo.toFixed(1)}%</span>
-                          </div>
-                      </div>
-                  `;
+                       <div class="card">
+                           <h3>Adoção do Modelo de Negócio</h3>
+                           <div class="card-content">
+                               <div class="metric" data-metric-id="modelo-negocio-preenchido" data-metric-title="Clientes com Modelo Preenchido">
+                                   <span class="metric-label">Preenchido:</span>
+                                   <span class="metric-value success">${preenchidosModelo.length}</span>
+                               </div>
+                               <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
+                                   <span class="metric-label">Total Avaliado:</span>
+                                   <span class="metric-value">${clientesContatadosBase.length}</span>
+                               </div>
+                           </div>
+                            <div class="progress-bar-container" title="${percModelo.toFixed(1)}% dos clientes contatados possuem modelo de negócio definido">
+                               <div class="progress-bar">
+                                   <div class="progress-bar-fill" style="width: ${percModelo.toFixed(1)}%;"></div>
+                               </div>
+                               <span class="progress-percentage">${percModelo.toFixed(1)}%</span>
+                           </div>
+                       </div>
+                   `;
 okrHtml += cardModeloNegocio;
 }
 
@@ -2282,26 +2210,26 @@ if (selectedSegmento === 'SMB CAD' || selectedSegmento === 'SMB Multiprodutos') 
 const preenchidosPotencial = dataStore['cliente-potencial-preenchido'] || [];
 const percPotencial = clientesContatadosBase.length > 0 ? (preenchidosPotencial.length / clientesContatadosBase.length) * 100 : 0;
 const cardClientePotencial = `
-                      <div class="card">
-                          <h3>Mapeamento de Cliente Potencial</h3>
-                          <div class="card-content">
-                              <div class="metric" data-metric-id="cliente-potencial-preenchido" data-metric-title="Clientes com Potencial Mapeado">
-                                  <span class="metric-label">Mapeado:</span>
-                                  <span class="metric-value success">${preenchidosPotencial.length}</span>
-                              </div>
-                              <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
-                                  <span class="metric-label">Total Avaliado:</span>
-                                  <span class="metric-value">${clientesContatadosBase.length}</span>
-                              </div>
-                          </div>
-                           <div class="progress-bar-container" title="${percPotencial.toFixed(1)}% dos clientes contatados possuem potencial mapeado">
-                              <div class="progress-bar">
-                                  <div class="progress-bar-fill" style="width: ${percPotencial.toFixed(1)}%;"></div>
-                              </div>
-                              <span class="progress-percentage">${percPotencial.toFixed(1)}%</span>
-                          </div>
-                      </div>
-                  `;
+                       <div class="card">
+                           <h3>Mapeamento de Cliente Potencial</h3>
+                           <div class="card-content">
+                               <div class="metric" data-metric-id="cliente-potencial-preenchido" data-metric-title="Clientes com Potencial Mapeado">
+                                   <span class="metric-label">Mapeado:</span>
+                                   <span class="metric-value success">${preenchidosPotencial.length}</span>
+                               </div>
+                               <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
+                                   <span class="metric-label">Total Avaliado:</span>
+                                   <span class="metric-value">${clientesContatadosBase.length}</span>
+                               </div>
+                           </div>
+                            <div class="progress-bar-container" title="${percPotencial.toFixed(1)}% dos clientes contatados possuem potencial mapeado">
+                               <div class="progress-bar">
+                                   <div class="progress-bar-fill" style="width: ${percPotencial.toFixed(1)}%;"></div>
+                               </div>
+                               <span class="progress-percentage">${percPotencial.toFixed(1)}%</span>
+                           </div>
+                       </div>
+                   `;
 okrHtml += cardClientePotencial;
 }
 
@@ -2357,35 +2285,35 @@ if(goal !== null && currentUser.isManager) metaHtml = `<div class="metric"><span
 let overdueHtml = '';
 if (overdueCount > 0) {
 overdueHtml = `
-                  <div class="metric overdue-metric" data-metric-id="${metricIdPrefix}-atrasado-concluido" data-metric-title="${title} (Concluídas com Atraso)" title="${overdueCount} atividades concluídas estavam previstas para meses anteriores">
-                      <span class="metric-label"><i class="fas fa-history"></i>Concluídas (Atraso):</span>
-                      <span class="metric-value">${overdueCount}</span>
-                  </div>
-              `;
+                   <div class="metric overdue-metric" data-metric-id="${metricIdPrefix}-atrasado-concluido" data-metric-title="${title} (Concluídas com Atraso)" title="${overdueCount} atividades concluídas estavam previstas para meses anteriores">
+                       <span class="metric-label"><i class="fas fa-history"></i>Concluídas (Atraso):</span>
+                       <span class="metric-value">${overdueCount}</span>
+                   </div>
+               `;
 }
 
 const trendButtonHtml = currentUser.isManager ? `<button class="trend-chart-button" data-metric-id="${metricIdPrefix}" data-metric-title="${title}" data-metric-type="playbook" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>` : '';
 
 return `
-              <div class="card">
-                  <h3>${title}${trendButtonHtml}</h3>
-                  <div class="card-content">
-                      <div class="metric" data-metric-id="${metricIdPrefix}-realizado" data-metric-title="${title} (Realizado no Prazo)">
-                          <span class="metric-label">Realizado (Prazo):</span>
-                          <span class="metric-value success">${realizadoNoPrazo}</span>
-                      </div>
-                      ${overdueHtml}
-                      <div class="metric" data-metric-id="${metricIdPrefix}-previsto" data-metric-title="${title} (Previsto)">
-                          <span class="metric-label">Previsto:</span>
-                          <span class="metric-value">${previsto}</span>
-                      </div>
-                      ${metaHtml}
-                  </div>
-                  <div class="progress-bar-container" title="Progresso de atividades previstas para o mês. Realizado (Prazo): ${realizadoNoPrazo}. Total Realizado (com atrasos): ${totalRealizado}.">
-                      <div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div>
-                      <span class="progress-percentage">${percentage.toFixed(0)}%</span>
-                  </div>
-              </div>`;
+               <div class="card">
+                   <h3>${title}${trendButtonHtml}</h3>
+                   <div class="card-content">
+                       <div class="metric" data-metric-id="${metricIdPrefix}-realizado" data-metric-title="${title} (Realizado no Prazo)">
+                           <span class="metric-label">Realizado (Prazo):</span>
+                           <span class="metric-value success">${realizadoNoPrazo}</span>
+                       </div>
+                       ${overdueHtml}
+                       <div class="metric" data-metric-id="${metricIdPrefix}-previsto" data-metric-title="${title} (Previsto)">
+                           <span class="metric-label">Previsto:</span>
+                           <span class="metric-value">${previsto}</span>
+                       </div>
+                       ${metaHtml}
+                   </div>
+                   <div class="progress-bar-container" title="Progresso de atividades previstas para o mês. Realizado (Prazo): ${realizadoNoPrazo}. Total Realizado (com atrasos): ${totalRealizado}.">
+                       <div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div>
+                       <span class="progress-percentage">${percentage.toFixed(0)}%</span>
+                   </div>
+               </div>`;
 };
 
 const createSimpleCard = (title, id1, label1, value1, id2, label2, value2) => {
@@ -2401,19 +2329,19 @@ if (!data || data.length === 0) return '<p style="padding: 20px; text-align: cen
 const headers = Object.keys(data[0]);
 const headerHtml = `<thead><tr>${headers.map(h => `<th><span>${h}</span></th>`).join('')}</tr></thead>`;
 const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => {
-              const cellValue = row[h];
-              let displayValue = '';
-              if (cellValue instanceof Date) {
-                  displayValue = formatDate(cellValue);
-              } else if (cellValue !== null && cellValue !== undefined) {
-                  displayValue = cellValue;
-              }
-              
-              if(normalizeText(h) === 'cliente') {
-                  return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
-              }
-              return `<td>${displayValue}</td>`;
-          }).join('')}</tr>`).join('')}</tbody>`;
+               const cellValue = row[h];
+               let displayValue = '';
+               if (cellValue instanceof Date) {
+                   displayValue = formatDate(cellValue);
+               } else if (cellValue !== null && cellValue !== undefined) {
+                   displayValue = cellValue;
+               }
+               
+               if(normalizeText(h) === 'cliente') {
+                   return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
+               }
+               return `<td>${displayValue}</td>`;
+           }).join('')}</tr>`).join('')}</tbody>`;
 return `<table class="data-table">${headerHtml}${bodyHtml}</table>`;
 };
 
@@ -2494,12 +2422,12 @@ if(!clientData) return;
 document.getElementById('client-360-name').textContent = clientData.Cliente;
 const infoContainer = document.getElementById('client-360-info');
 infoContainer.innerHTML = `
-              <div class="client-info-item"><span class="client-info-label">CS Responsável</span><span class="client-info-value">${clientData.CS || 'N/A'}</span></div>
-              <div class="client-info-item"><span class="client-info-label">ISM Responsável</span><span class="client-info-value">${clientData.ISM || 'N/A'}</span></div>
-              <div class="client-info-item"><span class="client-info-label">Segmento</span><span class="client-info-value">${clientData.Segmento || 'N/A'}</span></div>
-              <div class="client-info-item"><span class="client-info-label">Sense Score</span><span class="client-info-value">${clientData['Sense Score'] || 'N/A'}</span></div>
-              <div class="client-info-item"><span class="client-info-label">Fase</span><span class="client-info-value">${clientData.Fase || 'N/A'}</span></div>
-          `;
+               <div class="client-info-item"><span class="client-info-label">CS Responsável</span><span class="client-info-value">${clientData.CS || 'N/A'}</span></div>
+               <div class="client-info-item"><span class="client-info-label">ISM Responsável</span><span class="client-info-value">${clientData.ISM || 'N/A'}</span></div>
+               <div class="client-info-item"><span class="client-info-label">Segmento</span><span class="client-info-value">${clientData.Segmento || 'N/A'}</span></div>
+               <div class="client-info-item"><span class="client-info-label">Sense Score</span><span class="client-info-value">${clientData['Sense Score'] || 'N/A'}</span></div>
+               <div class="client-info-item"><span class="client-info-label">Fase</span><span class="client-info-value">${clientData.Fase || 'N/A'}</span></div>
+           `;
 
 const clientActivities = rawActivities
 .filter(a => a.ClienteCompleto === clientName.toLowerCase())
@@ -2618,25 +2546,9 @@ const selectSquad = document.getElementById('select-squad');
 const squadCsListDiv = document.getElementById('squad-cs-list');
 
 [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, document.getElementById('select-comparison'), selectPeriod, selectOnboardingTeam, selectISM].forEach(el => {
-el.addEventListener('change', (event) => {
-const targetId = event.target.id;
+    el.addEventListener('change', (event) => {
+        const targetId = event.target.id;
 
-        if (targetId === 'select-squad') {
-            const selectedSquadValue = selectSquad.value;
-            if (selectedSquadValue !== 'Todos') {
-                if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
-                selectCS.disabled = true;
-                
-                // NOVO TRECHO CORRETO
-const csInSquad = [];
-// Itera sobre o Map que já calculamos
-for (const [cs, squad] of csToSquadMap.entries()) {
-    // Se o Squad do CS for o mesmo que o selecionado no filtro...
-    if (squad === selectedSquadValue) {
-        csInSquad.push(cs); // ...adiciona o CS à lista.
-    }
-}
-squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
         if (currentUser.isManager) {
             if (targetId === 'select-squad') {
                 const selectedSquadValue = selectSquad.value;
@@ -2652,40 +2564,33 @@ squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
                     }
                     squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.sort().join(', ')}`;
 
-            } else {
-                if(!currentUser.isManager) {
-                   selectCS.disabled = true;
-} else {
-                   selectCS.disabled = false;
+                } else {
                     selectCS.disabled = false;
                     squadCsListDiv.textContent = '';
-}
+                }
             }
 
             if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
                 if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
-squadCsListDiv.textContent = '';
-}
-}
+                squadCsListDiv.textContent = '';
+            }
+        }
 
-if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
-            if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
-            squadCsListDiv.textContent = '';
-            
-const selectedCSValue = selectCS.value;
-const includeOnboarding = onboardingToggle.checked;
-let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
-const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
-autoSelectSegment(filteredClients);
-}
+        if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
+            const selectedCSValue = selectCS.value;
+            const includeOnboarding = onboardingToggle.checked;
+            let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
+            const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
+            autoSelectSegment(filteredClients);
+        }
+        
+        if (targetId === 'select-onboarding-team') {
+            updateIsmFilter();
+        }
 
-if (targetId === 'select-onboarding-team') {
-updateIsmFilter();
-}
-
-updateDashboard();
-renderOverdueView();
-});
+        updateDashboard();
+        renderOverdueView();
+    });
 });
 
 tabsContainer.addEventListener('click', (e) => {
@@ -2801,29 +2706,29 @@ const selectedSegmento = selectSegmento.value;
 const includeOnboarding = onboardingToggle.checked;
 
 const indicadoresGeraisHtml = `
-              <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
-              <table>
-                  <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
-                  <tbody>
-                      <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
-                      <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
-                      <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
-                      <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
-                      <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
-                  </tbody>
-              </table>`;
+               <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
+               <table>
+                   <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
+                   <tbody>
+                       <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
+                       <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
+                       <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
+                       <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
+                       <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
+                   </tbody>
+               </table>`;
 
 const tiposDeContatoHtml = `
-              <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
-              <table>
-                  <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
-                  <tbody>
-                      <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
-                      <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
-                      <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
-                      ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
-                  </tbody>
-              </table>`;
+               <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
+               <table>
+                   <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
+                   <tbody>
+                       <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
+                       <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
+                       <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
+                       ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
+                   </tbody>
+               </table>`;
 
 const playbooksData = [];
 const playbookDefs = {
@@ -2911,13 +2816,13 @@ const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
 csSelectionList.innerHTML = '';
 [...csSet].sort().forEach(cs => {
 csSelectionList.innerHTML += `
-                  <div class="cs-item">
-                      <label>
-                          <input type="checkbox" class="cs-checkbox" value="${cs}" checked>
-                          ${cs}
-                      </label>
-                  </div>
-              `;
+                   <div class="cs-item">
+                       <label>
+                           <input type="checkbox" class="cs-checkbox" value="${cs}" checked>
+                           ${cs}
+                       </label>
+                   </div>
+               `;
 });
 
 showModal(bulkExportModal);
@@ -2940,7 +2845,6 @@ const includeOnboarding = onboardingToggle.checked;
 
 for (const cs of selectedCSs) {
 console.log(`Gerando relatório para: ${cs}`);
-const csForCalc = 'Todos'; // Ao exportar em lote, calculamos para o CS individual, mas a função precisa saber o contexto
 const filteredClients = rawClients.filter(d => d.CS?.trim() === cs);
 const reportData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, cs, includeOnboarding);
 generateAndDownloadHtmlReport(cs, reportData, appGoals);
@@ -2957,13 +2861,6 @@ bulkExportModal.querySelector('.close-button').addEventListener('click', () => c
 
 // --- CONTROLE DE ACESSO VISUAL ---
 if (!currentUser.isManager) {
-document.getElementById('settings-button').style.display = 'none';
-document.getElementById('bulk-export-button').style.display = 'none';
-const csLabel = document.querySelector('[for="select-cs"]');
-if(csLabel) {
-csLabel.style.pointerEvents = 'none';
-csLabel.style.opacity = '0.6';
-}
     document.getElementById('settings-button').style.display = 'none';
     document.getElementById('bulk-export-button').style.display = 'none';
     document.getElementById('squad-filter-group').style.display = 'none';
