@@ -127,6 +127,25 @@ color: var(--text-light-color);
 margin: 0;
 }
 
+/* NOVO CSS PARA INFORMATIVO DE CARGA */
+#last-load-info {
+    font-size: 0.9rem;
+    color: var(--text-light-color);
+    margin-top: 12px;
+    background-color: color-mix(in srgb, var(--border-color) 40%, transparent);
+    padding: 8px 15px;
+    border-radius: var(--border-radius-md);
+    display: inline-block;
+    border: 1px solid var(--border-color);
+    transition: opacity 0.3s ease;
+}
+#last-load-info i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+/* FIM DO NOVO CSS */
+
+
 .revision-marker {
 position: absolute;
 top: 5px;
@@ -703,6 +722,7 @@ data-logo_alignment="left">
 </div>
 <h1>Dashboard de OKRs</h1>
 <p>Avaliação de Resultados e Performance</p>
+<div id="last-load-info" style="display: none;"></div>
 <div class="header-actions">
 <div class="theme-switcher">
 <i class="fas fa-sun"></i>
@@ -1368,6 +1388,20 @@ const processInitialData = () => {
 
 let atividadesFile, clientesFile;
 
+const displayLastLoadTime = (dateObj) => {
+    if (dateObj instanceof Date) {
+        const lastLoadInfoDiv = document.getElementById('last-load-info');
+        const formattedDate = dateObj.toLocaleDateString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+        const formattedTime = dateObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit', minute: '2-digit'
+        });
+        lastLoadInfoDiv.innerHTML = `<i class="fas fa-info-circle"></i> Última carga de dados: <strong>${formattedDate} às ${formattedTime}</strong>`;
+        lastLoadInfoDiv.style.display = 'inline-block';
+    }
+};
+
 const attemptProcess = () => {
     if (atividadesFile && clientesFile) {
         statusMessage.textContent = 'Lendo arquivos...';
@@ -1391,12 +1425,16 @@ const processAndCacheFiles = () => {
     if (atividadesFile && clientesFile) {
         // Primeiro, processa os arquivos para a sessão atual
         attemptProcess();
+        
         // Em seguida, salva em cache para as próximas sessões
+        const now = new Date();
         Promise.all([
             dbHelper.set('atividades', atividadesFile),
-            dbHelper.set('clientes', clientesFile)
+            dbHelper.set('clientes', clientesFile),
+            dbHelper.set('lastLoadTimestamp', now) // Salva o timestamp da carga
         ]).then(() => {
-            console.log("Arquivos salvos em cache para a próxima sessão.");
+            console.log("Arquivos e timestamp salvos em cache para a próxima sessão.");
+            displayLastLoadTime(now); // Mostra o novo timestamp imediatamente
         }).catch(err => {
             console.error("Não foi possível salvar os arquivos em cache.", err);
         });
@@ -1414,8 +1452,11 @@ fileClientesInput.addEventListener('change', (e) => {
 
 const loadDataFromCache = async () => {
     try {
-        const cachedAtividades = await dbHelper.get('atividades');
-        const cachedClientes = await dbHelper.get('clientes');
+        const [cachedAtividades, cachedClientes, cachedTimestamp] = await Promise.all([
+            dbHelper.get('atividades'),
+            dbHelper.get('clientes'),
+            dbHelper.get('lastLoadTimestamp')
+        ]);
 
         if (cachedAtividades && cachedClientes) {
             console.log("Planilhas encontradas no cache. Carregando...");
@@ -1433,6 +1474,10 @@ const loadDataFromCache = async () => {
             
             fileAtividadesInput.disabled = true;
             fileClientesInput.disabled = true;
+
+            if (cachedTimestamp) {
+                displayLastLoadTime(cachedTimestamp);
+            }
             
             attemptProcess();
         } else {
@@ -3025,6 +3070,17 @@ if (!currentUser.isManager) {
     }
 }
 } 
+</script>
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6862f529ad6c8f190c6f8c38/1iv18rasf';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
 </script>
 </body>
 </html>
