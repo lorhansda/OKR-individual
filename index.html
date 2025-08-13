@@ -1202,7 +1202,14 @@ const processInitialData = () => {
         const clienteKey = (ativ.Cliente || '').trim().toLowerCase();
         const clienteInfo = clienteMap.get(clienteKey) || {};
         return { 
-            // ... (resto do objeto)
+            ...ativ, 
+            ClienteCompleto: clienteKey, 
+            Segmento: clienteInfo.Segmento, 
+            CS: clienteInfo.CS, 
+            Fase: clienteInfo.Fase,
+            ISM: clienteInfo.ISM,
+            PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
+            ConcluidaEm: parseDate(ativ['Concluída em']) 
         };
     });
 
