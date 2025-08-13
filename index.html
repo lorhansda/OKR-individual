@@ -742,6 +742,7 @@ data-logo_alignment="left">
 <div class="control-group"><label for="select-year"><i class="fas fa-calendar-week"></i> Ano</label><select id="select-year"></select></div>
 <div class="control-group"><label for="select-month"><i class="fas fa-calendar-alt"></i> Mês</label><select id="select-month"></select></div>
 <div class="control-group"><label for="select-cs"><i class="fas fa-user-tie"></i> CS</label><select id="select-cs" disabled><option>Aguardando...</option></select></div>
+<div class="control-group"><label for="select-squad"><i class="fas fa-users"></i> Squad</label><select id="select-squad" disabled><option>Aguardando...</option></select></div>
 <div class="control-group"><label for="select-segmento"><i class="fas fa-chart-pie"></i> Segmento</label><select id="select-segmento" disabled><option>Aguardando...</option></select></div>
 <div class="control-group">
 <label for="select-comparison"><i class="fas fa-exchange-alt"></i> Comparar com</label>
@@ -759,6 +760,8 @@ data-logo_alignment="left">
 </label>
 </div>
 </section>
+
+<div id="squad-cs-list" style="text-align: center; margin: -15px 0 20px 0; color: var(--text-light-color); font-style: italic;"></div>
 
 <div id="divergence-marker" class="divergence-info" style="display: none;">
 <span id="divergence-text"></span>
@@ -1205,7 +1208,8 @@ const processInitialData = () => {
             ...ativ, 
             ClienteCompleto: clienteKey, 
             Segmento: clienteInfo.Segmento, 
-            CS: clienteInfo.CS, 
+            CS: clienteInfo.CS,
+            Squad: clienteInfo['Squad CS'],
             Fase: clienteInfo.Fase,
             ISM: clienteInfo.ISM,
             PrevisaoConclusao: parseDate(ativ['Previsão de conclusão']), 
@@ -1213,33 +1217,31 @@ const processInitialData = () => {
         };
     });
 
-    populateFilters(); // 1. Filtros são populados. Para não-gestores, o CS é definido aqui.
+    populateFilters();
 
-    // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
-    // Após popular, forçamos a seleção do segmento para o CS logado (se não for gestor)
     if (!currentUser.isManager) {
-        const selectedCS = selectCS.value; // Pega o valor do CS que foi definido em populateFilters()
+        const selectedCS = selectCS.value;
         if (selectedCS) {
-             // Filtra a carteira de clientes com base no CS do usuário
             const clientsOfLoggedInUser = rawClients.filter(client => client.CS?.trim() === selectedCS);
-            // Executa a função que analisa a carteira e define o segmento correto no dropdown
             autoSelectSegment(clientsOfLoggedInUser);
         }
     }
-    // --- FIM DA CORREÇÃO DEFINITIVA ---
 
-    renderDataTables(); // 2. O restante do processamento continua
+    renderDataTables();
     statusMessage.style.display = 'none';
     dashboard.style.display = 'block';
     onboardingDashboard.style.display = 'block';
     tabsContainer.style.display = 'flex';
-    [selectCS, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+    const selectSquad = document.getElementById('select-squad');
+    [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
+    
     if (!currentUser.isManager) {
         selectCS.disabled = true;
     }
+    
     [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
     
-    updateDashboard(); // 3. AGORA, o dashboard é atualizado usando o valor de segmento que acabamos de definir.
+    updateDashboard();
     renderOverdueView();
 };
 
@@ -1268,9 +1270,9 @@ selectISM.appendChild(option);
 
 const populateFilters = () => {
 const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
-selectCS.innerHTML = ''; // Limpa as opções
+const selectSquad = document.getElementById('select-squad');
+selectCS.innerHTML = ''; 
 
-// Adiciona a opção "Todos" apenas para gestores
 if (currentUser.isManager) {
 selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
 }
@@ -1283,16 +1285,24 @@ option.textContent = cs;
 selectCS.appendChild(option); 
 });
 
-// Se o usuário não for gestor, seleciona o CS dele automaticamente
 if (!currentUser.isManager) {
-    // Tenta encontrar o nome do CS baseado no nome completo do Google
     const userFirstName = currentUser.name.split(' ')[0];
     const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
     if (matchingCS) {
         selectCS.value = matchingCS;
     }
-    selectCS.disabled = true; // Desabilita o seletor para não gestores
+    selectCS.disabled = true;
 }
+
+const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
+selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
+const sortedSquads = [...squadSet].sort();
+sortedSquads.forEach(squad => {
+    const option = document.createElement('option');
+    option.value = squad;
+    option.textContent = squad;
+    selectSquad.appendChild(option);
+});
 
 updateIsmFilter();
 
@@ -1389,21 +1399,17 @@ return metrics;
 const calculateOverdueMetrics = (activities, selectedCS) => {
 const metrics = { overdueActivities: {} };
 const today = new Date();
-today.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+today.setHours(0, 0, 0, 0);
 
-// Filtra as atividades que pertencem ao CS selecionado (ou todas, se "Todos")
 const csActivities = selectedCS === 'Todos'
 ? activities
 : activities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
 
-// Identifica as atividades realmente atrasadas
 const overdue = csActivities.filter(a => {
 const dueDate = a.PrevisaoConclusao;
-// Está atrasada se: Não foi concluída E a data de previsão existe E é anterior a hoje.
 return !a.ConcluidaEm && dueDate && dueDate < today;
 });
 
-// Reutiliza a mesma definição de playbooks do seu código original
 const playbookDefs = {
 'plano': { p: 'plano de acao', a: 'analise do cenario do cliente' },
 'adocao': { p: null, a: ["revisao da adocao - sponsor (mid/enterprise)","revisao da adocao - ku (mid/enterprise)","revisao da adocao - ku (smb)"] },
@@ -1415,7 +1421,6 @@ const playbookDefs = {
 'baixo-engajamento-mid': { p: null, a: "cliente com baixo engajamento - mid/enter" }
 };
 
-// Separa as atividades atrasadas por categoria (playbook)
 for (const [key, def] of Object.entries(playbookDefs)) {
 let filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
 
@@ -1450,7 +1455,7 @@ const playbookTitles = {
 };
 
 let totalOverdue = 0;
-const metricDataMap = {}; // Armazenar dados para o modal
+const metricDataMap = {}; 
 for (const key in playbookTitles) {
 const activities = overdueMetrics.overdueActivities[key] || [];
 totalOverdue += activities.length;
@@ -1476,7 +1481,6 @@ if (totalOverdue === 0) {
 overdueGrid.innerHTML = `<div class="loader" style="color: var(--secondary-color); border-color: var(--secondary-color);"><i class="fas fa-check-circle" style="margin-right: 10px;"></i>Nenhuma atividade atrasada para o filtro selecionado!</div>`;
 } else {
 overdueGrid.innerHTML = html;
-// Adiciona o gatilho para o modal de detalhes
 document.querySelectorAll('#overdue-grid-container .metric').forEach(el => {
 el.addEventListener('click', () => {
 const metricId = el.dataset.metricId;
@@ -1574,20 +1578,14 @@ for (const [key, def] of Object.entries(playbookDefs)) {
 let filterFn;
 
 if (key === 'plano') {
-// Lógica customizada para "Plano de Ação"
 filterFn = (item) => {
 const atividadeNormalizada = normalizeText(item.Atividade);
 const playbookNormalizado = normalizeText(item.Playbook);
-
-// Condição original
 const isPlanoOriginal = playbookNormalizado.includes(def.p) && atividadeNormalizada.includes(def.a);
-// Nova condição para "Alerta Suporte"
 const isAlertaSuporte = atividadeNormalizada.startsWith('alerta suporte');
-
 return isPlanoOriginal || isAlertaSuporte;
 };
 } else {
-// Lógica padrão para todos os outros playbooks
 filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
 }
 
@@ -1669,20 +1667,14 @@ for (const [key, def] of Object.entries(playbookDefs)) {
 let filterFn;
 
 if (key === 'plano') {
-// Lógica customizada para "Plano de Ação"
 filterFn = (item) => {
 const atividadeNormalizada = normalizeText(item.Atividade);
 const playbookNormalizado = normalizeText(item.Playbook);
-
-// Condição original
 const isPlanoOriginal = playbookNormalizado.includes(def.p) && atividadeNormalizada.includes(def.a);
-// Nova condição para "Alerta Suporte"
 const isAlertaSuporte = atividadeNormalizada.startsWith('alerta suporte');
-
 return isPlanoOriginal || isAlertaSuporte;
 };
 } else {
-// Lógica padrão para todos os outros playbooks
 filterFn = (item) => def.p ? (normalizeText(item.Playbook).includes(def.p) && normalizeText(item.Atividade).includes(def.a)) : (Array.isArray(def.a) ? def.a.some(term => normalizeText(item.Atividade).includes(term)) : normalizeText(item.Atividade).includes(def.a));
 }
 
@@ -1860,88 +1852,97 @@ periodView.innerHTML = `
 };
 
 const updateDashboard = () => {
-if (rawClients.length === 0 || rawActivities.length === 0) return;
+    if (rawClients.length === 0 || rawActivities.length === 0) return;
 
-const period = selectPeriod.value;
-const selectedYear = parseInt(selectYear.value, 10);
-const exportCsvBtn = document.getElementById('export-csv-button');
-const exportHtmlBtn = document.getElementById('export-html-button');
+    const period = selectPeriod.value;
+    const selectedYear = parseInt(selectYear.value, 10);
+    const exportCsvBtn = document.getElementById('export-csv-button');
+    const exportHtmlBtn = document.getElementById('export-html-button');
 
-if (period === 'monthly') {
-periodView.style.display = 'none';
-dashboard.style.display = 'block';
-exportCsvBtn.disabled = false;
-exportHtmlBtn.disabled = false;
+    if (period === 'monthly') {
+        periodView.style.display = 'none';
+        dashboard.style.display = 'block';
+        exportCsvBtn.disabled = false;
+        exportHtmlBtn.disabled = false;
 
-const includeOnboarding = onboardingToggle.checked;
-const selectedCS = selectCS.value;
-const mesSelecionado = parseInt(selectMonth.value, 10);
-const anoSelecionado = parseInt(selectYear.value, 10);
-const filteredClients = (selectedCS === 'Todos') ? rawClients : rawClients.filter(d => d.CS?.trim() === selectedCS);
+        const includeOnboarding = onboardingToggle.checked;
+        const mesSelecionado = parseInt(selectMonth.value, 10);
+        const anoSelecionado = parseInt(selectYear.value, 10);
 
-dataStore = {};
-Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, selectedCS, includeOnboarding));
+        const selectedCS = selectCS.value;
+        const selectedSquad = document.getElementById('select-squad').value;
+        let filteredClients = rawClients;
 
-const selectedComparison = document.getElementById('select-comparison').value;
-if (selectedComparison !== 'none') {
-let compMes = mesSelecionado, compAno = anoSelecionado;
-if (selectedComparison === 'prev_month') {
-compMes--;
-if (compMes < 0) { compMes = 11; compAno--; }
-} else if (selectedComparison === 'prev_year') {
-compAno--;
-}
+        if (selectedSquad !== 'Todos') {
+            filteredClients = rawClients.filter(d => d['Squad CS'] === selectedSquad);
+        } else if (selectedCS !== 'Todos') {
+            filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
+        }
+        
+        const csForCalc = selectedSquad !== 'Todos' ? 'Todos' : selectedCS;
+        dataStore = {};
+        Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, csForCalc, includeOnboarding));
 
-const baseClientsComp = (selectedCS === 'Todos') ? rawClients : rawClients.filter(d => d.CS?.trim() === selectedCS);
-const comparisonMetrics = calculateMetricsForPeriod(compMes, compAno, rawActivities, baseClientsComp, selectedCS, includeOnboarding);
-Object.keys(comparisonMetrics).forEach(key => {
-dataStore[`${key}_comp`] = comparisonMetrics[key];
-});
-}
+        const selectedComparison = document.getElementById('select-comparison').value;
+        if (selectedComparison !== 'none') {
+            let compMes = mesSelecionado, compAno = anoSelecionado;
+            if (selectedComparison === 'prev_month') {
+                compMes--;
+                if (compMes < 0) { compMes = 11; compAno--; }
+            } else if (selectedComparison === 'prev_year') {
+                compAno--;
+            }
 
-const activitiesByCS = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
-const concludedInPeriodActivities = activitiesByCS.filter(a => a.ConcluidaEm?.getMonth() === mesSelecionado && a.ConcluidaEm?.getFullYear() === anoSelecionado);
-const divergentActivities = concludedInPeriodActivities.filter(a => {
-return a.CS && a.CS.trim() !== selectedCS && selectedCS !== 'Todos';
-});
-dataStore['divergent-activities'] = divergentActivities;
-const divergenceMarker = document.getElementById('divergence-marker');
-const divergenceText = document.getElementById('divergence-text');
-const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
-divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
-divergenceMarker.style.display = 'flex';
-} else {
-divergenceMarker.style.display = 'none';
-}
+            const comparisonMetrics = calculateMetricsForPeriod(compMes, compAno, rawActivities, filteredClients, csForCalc, includeOnboarding);
+            Object.keys(comparisonMetrics).forEach(key => {
+                dataStore[`${key}_comp`] = comparisonMetrics[key];
+            });
+        }
 
-renderOKRs();
-renderOnboardingDashboard();
+        const activitiesByCS = (selectedCS === 'Todos') ? rawActivities : rawActivities.filter(a => (a['Responsável'] || '').trim() === selectedCS);
+        const concludedInPeriodActivities = activitiesByCS.filter(a => a.ConcluidaEm?.getMonth() === mesSelecionado && a.ConcluidaEm?.getFullYear() === anoSelecionado);
+        const divergentActivities = concludedInPeriodActivities.filter(a => {
+            return a.CS && a.CS.trim() !== selectedCS && selectedCS !== 'Todos';
+        });
+        dataStore['divergent-activities'] = divergentActivities;
+        const divergenceMarker = document.getElementById('divergence-marker');
+        const divergenceText = document.getElementById('divergence-text');
+        const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
+        if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
+            divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
+            divergenceMarker.style.display = 'flex';
+        } else {
+            divergenceMarker.style.display = 'none';
+        }
 
-} else {
-exportCsvBtn.disabled = true;
-exportHtmlBtn.disabled = true;
+        renderOKRs();
+        renderOnboardingDashboard();
 
-const includeOnboarding = onboardingToggle.checked;
-const selectedCS = selectCS.value;
-const dateRange = getPeriodDateRange(period, selectedYear);
-const periodName = selectPeriod.options[selectPeriod.selectedIndex].text;
+    } else {
+        exportCsvBtn.disabled = true;
+        exportHtmlBtn.disabled = true;
 
-if (dateRange) {
-statusMessage.textContent = `Calculando métricas para: ${periodName}...`;
-statusMessage.style.display = 'block';
-dashboard.style.display = 'none';
-periodView.style.display = 'none';
-document.getElementById('divergence-marker').style.display = 'none';
+        const includeOnboarding = onboardingToggle.checked;
+        const selectedCSValue = selectCS.value;
+        const dateRange = getPeriodDateRange(period, selectedYear);
+        const periodName = selectPeriod.options[selectPeriod.selectedIndex].text;
 
-setTimeout(() => {
-const periodData = calculateMetricsForDateRange(dateRange.start, dateRange.end, rawActivities, rawClients, selectedCS, includeOnboarding);
-renderPeriodView(periodData, periodName);
-statusMessage.style.display = 'none';
-}, 50);
-}
-}
+        if (dateRange) {
+            statusMessage.textContent = `Calculando métricas para: ${periodName}...`;
+            statusMessage.style.display = 'block';
+            dashboard.style.display = 'none';
+            periodView.style.display = 'none';
+            document.getElementById('divergence-marker').style.display = 'none';
+
+            setTimeout(() => {
+                const periodData = calculateMetricsForDateRange(dateRange.start, dateRange.end, rawActivities, rawClients, selectedCSValue, includeOnboarding);
+                renderPeriodView(periodData, periodName);
+                statusMessage.style.display = 'none';
+            }, 50);
+        }
+    }
 };
+
 
 const renderOnboardingDashboard = () => {
 if (rawClients.length === 0 || rawActivities.length === 0) return;
@@ -2345,8 +2346,8 @@ const renderTable = (tableData) => {
 modalBody.innerHTML = createHtmlTable(tableData);
 };
 
-searchInput.value = ''; // Limpa a busca anterior
-searchInput.oninput = () => { // Usa oninput para uma resposta mais rápida
+searchInput.value = '';
+searchInput.oninput = () => { 
 const searchTerm = normalizeText(searchInput.value);
 if (!searchTerm) {
 renderTable(data);
@@ -2492,60 +2493,59 @@ processInitialData();
 fileAtividadesInput.addEventListener('change', (e) => { atividadesFile = e.target.files[0]; attemptProcess(); });
 fileClientesInput.addEventListener('change', (e) => { clientesFile = e.target.files[0]; attemptProcess(); });
 
-selectPeriod.addEventListener('change', () => {
-const isMonthly = selectPeriod.value === 'monthly';
-selectMonth.disabled = !isMonthly;
-document.getElementById('select-comparison').disabled = !isMonthly;
+const selectSquad = document.getElementById('select-squad');
+const squadCsListDiv = document.getElementById('squad-cs-list');
 
-if (!isMonthly) {
-document.getElementById('select-comparison').value = 'none';
-}
-updateDashboard();
-});
+[selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, document.getElementById('select-comparison'), selectPeriod, selectOnboardingTeam, selectISM].forEach(el => {
+    el.addEventListener('change', (event) => {
+        const targetId = event.target.id;
 
-selectOnboardingTeam.addEventListener('change', () => {
-updateIsmFilter();
-updateDashboard();
-});
-selectISM.addEventListener('change', updateDashboard);
+        if (targetId === 'select-squad') {
+            const selectedSquadValue = selectSquad.value;
+            if (selectedSquadValue !== 'Todos') {
+                if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
+                selectCS.disabled = true;
+                
+                const csInSquad = [...new Set(rawClients
+                    .filter(c => c['Squad CS'] === selectedSquadValue)
+                    .map(c => c.CS)
+                    .filter(Boolean))]
+                    .sort();
+                squadCsListDiv.textContent = `CSs no Squad: ${csInSquad.join(', ')}`;
 
-[selectCS, selectSegmento, selectMonth, selectYear, onboardingToggle, document.getElementById('select-comparison')].forEach(el => {
-el.addEventListener('change', (event) => {
-if (event.target.id === 'select-cs') {
-const selectedCSValue = selectCS.value;
-if (selectedCSValue !== 'Todos') {
-const includeOnboarding = onboardingToggle.checked;
-let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
-const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
-autoSelectSegment(filteredClients);
-}
-}
-updateDashboard();
-renderOverdueView();
-});
-});
+            } else {
+                if(!currentUser.isManager) {
+                   selectCS.disabled = true;
+                } else {
+                   selectCS.disabled = false;
+                }
+                squadCsListDiv.textContent = '';
+            }
+        }
 
-tabsContainer.addEventListener('click', (e) => { 
-if (e.target.matches('.tab-button')) { 
-document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active')); 
-document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); 
-e.target.classList.add('active'); 
-document.getElementById(e.target.dataset.tab).classList.add('active');
+        if (targetId === 'select-cs' && selectCS.value !== 'Todos') {
+            if (selectSquad.value !== 'Todos') selectSquad.value = 'Todos';
+            squadCsListDiv.textContent = '';
+            
+            const selectedCSValue = selectCS.value;
+            const includeOnboarding = onboardingToggle.checked;
+            let clientsForSegmentCheck = includeOnboarding ? rawClients : rawClients.filter(cli => normalizeText(cli.Fase) !== 'onboarding');
+            const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
+            autoSelectSegment(filteredClients);
+        }
+        
+        if (targetId === 'select-onboarding-team') {
+            updateIsmFilter();
+        }
 
-if (e.target.dataset.tab === 'overdue-view') {
-renderOverdueView();
-}
-if (e.target.dataset.tab === 'data-view') {
-renderDataTables();
-} else if (e.target.dataset.tab === 'onboarding-view') {
-renderOnboardingDashboard();
-}
-} 
+        updateDashboard();
+        renderOverdueView();
+    });
 });
 
 document.body.addEventListener('click', (e) => {
 const metricElement = e.target.closest('.metric[data-metric-id]');
-if (metricElement && !metricElement.closest('#overdue-grid-container')) { // Evita conflito com o listener da aba de atrasadas
+if (metricElement && !metricElement.closest('#overdue-grid-container')) {
 showDetailsModal(metricElement.dataset.metricId, metricElement.dataset.metricTitle);
 }
 const clientNameSpan = e.target.closest('span[data-client-name]');
@@ -2777,6 +2777,7 @@ const includeOnboarding = onboardingToggle.checked;
 
 for (const cs of selectedCSs) {
 console.log(`Gerando relatório para: ${cs}`);
+const csForCalc = 'Todos'; // Ao exportar em lote, calculamos para o CS individual, mas a função precisa saber o contexto
 const filteredClients = rawClients.filter(d => d.CS?.trim() === cs);
 const reportData = calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, cs, includeOnboarding);
 generateAndDownloadHtmlReport(cs, reportData, appGoals);
