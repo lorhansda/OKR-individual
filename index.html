@@ -1543,14 +1543,65 @@ option.textContent = cs;
 selectCS.appendChild(option); 
 });
 
+// ### AJUSTE DE LÓGICA DE SELEÇÃO AUTOMÁTICA DO CS ###
 if (!currentUser.isManager) {
-    const userFirstName = currentUser.name.split(' ')[0];
-    const matchingCS = sortedCS.find(cs => normalizeText(cs).includes(normalizeText(userFirstName)));
-    if (matchingCS) {
-        selectCS.value = matchingCS;
+    // 1. Obter identificadores do usuário a partir do nome e e-mail
+    const emailUsername = currentUser.email.split('@')[0];
+    const nameParts = currentUser.name.split(' ');
+
+    // 2. Criar uma lista priorizada de termos para busca
+    const searchTerms = [
+        ...nameParts.map(part => normalizeText(part)),
+        normalizeText(emailUsername).replace(/[\._-]/g, ' ') // Substitui separadores por espaço
+    ].flatMap(term => term.split(' ')).filter(term => term.length > 2); // Divide e remove termos curtos
+
+    const uniqueSearchTerms = [...new Set(searchTerms)]; // Remove duplicados
+
+    let bestMatch = null;
+
+    // 3. Tentar encontrar a melhor correspondência com base em prioridades
+    // Prioridade 1: Correspondência exata
+    for (const term of uniqueSearchTerms) {
+        const exactMatch = sortedCS.find(cs => normalizeText(cs) === term);
+        if (exactMatch) {
+            bestMatch = exactMatch;
+            break;
+        }
     }
+
+    // Prioridade 2: Se não houver correspondência exata, verificar se o nome do CS começa com o termo
+    if (!bestMatch) {
+        for (const term of uniqueSearchTerms) {
+            const startsWithMatch = sortedCS.find(cs => normalizeText(cs).startsWith(term));
+            if (startsWithMatch) {
+                bestMatch = startsWithMatch;
+                break;
+            }
+        }
+    }
+
+    // Prioridade 3: Como último recurso, verificar se o nome do CS inclui o termo
+    if (!bestMatch) {
+        for (const term of uniqueSearchTerms) {
+            const includesMatch = sortedCS.find(cs => normalizeText(cs).includes(term));
+            if (includesMatch) {
+                bestMatch = includesMatch;
+                break;
+            }
+        }
+    }
+
+    // 4. Aplicar a correspondência encontrada
+    if (bestMatch) {
+        selectCS.value = bestMatch;
+        console.log(`CS auto-selecionado: ${bestMatch} para o usuário ${currentUser.name}`);
+    } else {
+        console.warn(`Nenhum CS correspondente encontrado para ${currentUser.name} (${currentUser.email}).`);
+    }
+
     selectCS.disabled = true;
 }
+// ### FIM DO AJUSTE ###
 
 if (currentUser.isManager) {
     const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
@@ -3070,17 +3121,6 @@ if (!currentUser.isManager) {
     }
 }
 } 
-</script>
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/6862f529ad6c8f190c6f8c38/1iv18rasf';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
 </script>
 </body>
 </html>
