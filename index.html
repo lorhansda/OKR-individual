@@ -1527,7 +1527,7 @@ selectISM.appendChild(option);
 };
 
 const populateFilters = () => {
-    const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+    const csSet = new Set(rawClients.map(d => d.CS?.trim()).filter(Boolean)); // Adicionado .trim() para segurança
     const selectSquad = document.getElementById('select-squad');
     selectCS.innerHTML = '';
 
@@ -1543,58 +1543,30 @@ const populateFilters = () => {
         selectCS.appendChild(option);
     });
 
-    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA CORRIGIDA ###
+    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA REFINADA E CORRIGIDA ###
     if (!currentUser.isManager) {
-        const emailUsername = currentUser.email.split('@')[0];
-        const nameParts = currentUser.name.split(' ');
-
-        const searchTerms = [...new Set([
-            ...nameParts.map(part => normalizeText(part)),
-            normalizeText(emailUsername).replace(/[\._-]/g, ' ')
-        ].flatMap(term => term.split(' ')).filter(term => term.length > 2))];
-
         let bestMatch = null;
+        const normalizedEmailUser = normalizeText(currentUser.email.split('@')[0]);
 
-        // Prioridade 1: Correspondência exata
-        for (const term of searchTerms) {
-            const exactMatch = sortedCS.find(cs => normalizeText(cs) === term);
-            if (exactMatch) {
-                bestMatch = exactMatch;
-                break;
-            }
-        }
+        // Prioridade 1: Verifica se o e-mail do usuário COMEÇA com o nome de um CS.
+        // Ex: "elianeokr" começa com "eliane". Esta é a verificação mais confiável.
+        const emailMatch = sortedCS.find(cs => normalizedEmailUser.startsWith(normalizeText(cs)));
 
-        // Prioridade 2: "Começa com"
-        if (!bestMatch) {
-            for (const term of searchTerms) {
-                const startsWithMatch = sortedCS.find(cs => normalizeText(cs).startsWith(term));
-                if (startsWithMatch) {
-                    bestMatch = startsWithMatch;
+        if (emailMatch) {
+            bestMatch = emailMatch;
+        } else {
+            // Prioridade 2 (Fallback): Se o e-mail não corresponder, tenta usar o nome da conta Google.
+            const nameParts = currentUser.name.split(' ').map(part => normalizeText(part));
+            for (const part of nameParts) {
+                const nameMatch = sortedCS.find(cs => normalizeText(cs) === part);
+                if (nameMatch) {
+                    bestMatch = nameMatch;
                     break;
                 }
             }
         }
 
-        // Prioridade 3 (NOVA E MAIS EFICAZ): Verifica se o e-mail contém o nome de um CS
-        if (!bestMatch) {
-            const normalizedEmailUser = normalizeText(emailUsername);
-            const emailContainsCSMatch = sortedCS.find(cs => normalizedEmailUser.includes(normalizeText(cs)));
-            if (emailContainsCSMatch) {
-                bestMatch = emailContainsCSMatch;
-            }
-        }
-
-        // Prioridade 4: Fallback para "inclui"
-        if (!bestMatch) {
-            for (const term of searchTerms) {
-                const includesMatch = sortedCS.find(cs => normalizeText(cs).includes(term));
-                if (includesMatch) {
-                    bestMatch = includesMatch;
-                    break;
-                }
-            }
-        }
-
+        // Aplica a correspondência encontrada
         if (bestMatch) {
             selectCS.value = bestMatch;
             console.log(`CS auto-selecionado: ${bestMatch} para o usuário ${currentUser.name}`);
@@ -1605,7 +1577,6 @@ const populateFilters = () => {
         selectCS.disabled = true;
     }
     // ### FIM DA CORREÇÃO ###
-
 
     if (currentUser.isManager) {
         const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
