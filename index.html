@@ -1527,7 +1527,9 @@ selectISM.appendChild(option);
 };
 
 const populateFilters = () => {
-    const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
+    // Adicionado .trim() para remover espaços em branco do nome do CS
+    const csSet = new Set(rawClients.map(d => d.CS && d.CS.trim()).filter(Boolean));
+    
     const selectSquad = document.getElementById('select-squad');
     selectCS.innerHTML = ''; 
 
@@ -1543,38 +1545,41 @@ const populateFilters = () => {
         selectCS.appendChild(option); 
     });
 
-    // ### NOVA LÓGICA DE SELEÇÃO AUTOMÁTICA DO CS VIA E-MAIL ###
+    // ### NOVA LÓGICA CORRIGIDA PARA NOMES COMPOSTOS ###
     if (!currentUser.isManager) {
-        // 1. Pega a parte do e-mail antes do '@' e a normaliza (minúsculas, sem acentos).
         const emailIdentifier = normalizeText(currentUser.email.split('@')[0]);
         let foundCS = null;
 
-        // 2. Procura na lista de CSs disponíveis.
         for (const csName of sortedCS) {
-            const normalizedCsName = normalizeText(csName);
-            
-            // 3. Verifica se o identificador do e-mail CONTÉM o nome do CS.
-            // Ex: 'testedeokr.kelly' inclui 'kelly'.
-            if (emailIdentifier.includes(normalizedCsName)) {
-                foundCS = csName;
-                break; // Para a busca ao encontrar a primeira correspondência.
+            // Divide o nome do CS em partes (ex: "Lorhan Almeida" -> ["lorhan", "almeida"])
+            const csNameParts = normalizeText(csName).split(' ');
+
+            // Verifica se alguma parte do nome do CS está contida no e-mail
+            for (const part of csNameParts) {
+                // Adicionada uma verificação para ignorar partes muito pequenas (ex: "de", "da")
+                if (part.length > 2 && emailIdentifier.includes(part)) {
+                    foundCS = csName;
+                    break; // Sai do loop das "partes"
+                }
+            }
+
+            if (foundCS) {
+                break; // Sai do loop principal dos "CSs"
             }
         }
         
-        // 4. Se encontrou uma correspondência, define como o valor do seletor.
         if (foundCS) {
             selectCS.value = foundCS;
             console.log(`CS auto-selecionado via e-mail: ${foundCS} para o usuário ${currentUser.name}`);
         } else {
-            // Se não encontrar, exibe um aviso no console.
+            // A mensagem de erro que você viu no console
             console.warn(`Nenhum CS correspondente encontrado no e-mail ${currentUser.email}.`);
-            // Veja a sugestão abaixo para lidar com este caso.
         }
 
         selectCS.disabled = true;
     }
-    // ### FIM DO AJUSTE ###
 
+    // O restante da função continua igual
     if (currentUser.isManager) {
         const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
         selectSquad.innerHTML = '<option value="Todos">Todos os Squads</option>';
