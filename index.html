@@ -970,21 +970,6 @@ const dbHelper = {
                 console.error("Erro ao abrir o IndexedDB:", event.target.error);
                 reject("Erro no IndexedDB.");
             };
-            // ... código do dbHelper ...
-
-// INÍCIO DO NOVO BLOCO DE CADASTRO MANUAL
-// Adicione aqui os e-mails que não são detectados automaticamente.
-const manualEmailToCsMap = {
-    "email.dificil@provedor.com": "Nome Completo do CS",
-    "contato@empresa.com.br": "Outro CS",
-    // Exemplo:
-    // "joana.s@emailaleatorio.net": "Joana Souza"
-};
-// FIM DO NOVO BLOCO
-
-// --- LOGIN AUTHENTICATION SCRIPT ---
-let currentUser = {
-// ... resto do seu código ...
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
@@ -1043,48 +1028,60 @@ let currentUser = {
     }
 };
 
+// CÓDIGO CORRIGIDO E MOVIDO PARA O LUGAR CERTO
+// Adicione aqui os e-mails que não são detectados automaticamente.
+const manualEmailToCsMap = {
+    "email.dificil@provedor.com": "Nome Completo do CS",
+    "contato@empresa.com.br": "Outro CS",
+    // Exemplo:
+    // "joana.s@emailaleatorio.net": "Joana Souza"
+};
+
 // --- LOGIN AUTHENTICATION SCRIPT ---
 let currentUser = {
-email: null,
-name: null,
-isManager: false
+    email: null,
+    name: null,
+    isManager: false
 };
 
 // Função para decodificar o token JWT recebido do Google
 function parseJwt(token) {
-try {
-return JSON.parse(atob(token.split('.')[1]));
-} catch (e) {
-return null;
-}
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+        return null;
+    }
 }
 
 // Função chamada pelo Google após um login bem-sucedido
 function handleCredentialResponse(response) {
-const decodedToken = parseJwt(response.credential);
+    const decodedToken = parseJwt(response.credential);
 
-if (decodedToken) {
-// Salva o token no cache do navegador para manter a sessão
-localStorage.setItem('googleUserToken', response.credential);
+    if (decodedToken) {
+        // Salva o token no cache do navegador para manter a sessão
+        localStorage.setItem('googleUserToken', response.credential);
 
-currentUser.email = decodedToken.email;
-currentUser.name = decodedToken.name;
+        currentUser.email = decodedToken.email;
+        currentUser.name = decodedToken.name;
 
-// Definição de acesso de gestor
-const managerEmails = ['lorhanska@gmail.com', 'lorhan.sda@gmail.com','elianeokr@gmail.com'];
-currentUser.isManager = managerEmails.includes(currentUser.email);
+        // Definição de acesso de gestor
+        const managerEmails = ['lorhanska@gmail.com', 'lorhan.sda@gmail.com','elianeokr@gmail.com'];
+        currentUser.isManager = managerEmails.includes(currentUser.email);
 
-// Esconde a tela de login e exibe o dashboard
-document.getElementById('login-container').style.display = 'none';
-document.getElementById('dashboard-wrapper').style.display = 'block';
+        // Esconde a tela de login e exibe o dashboard
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('dashboard-wrapper').style.display = 'block';
 
-// Inicia o dashboard principal após o login
-initializeDashboard(); 
-} else {
-alert("Falha no login. Não foi possível verificar suas credenciais. Tente novamente.");
-localStorage.removeItem('googleUserToken'); // Limpa token inválido
+        // Inicia o dashboard principal após o login
+        initializeDashboard(); 
+    } else {
+        alert("Falha no login. Não foi possível verificar suas credenciais. Tente novamente.");
+        localStorage.removeItem('googleUserToken'); // Limpa token inválido
+    }
 }
-}
+
+// ... COLE O RESTANTE DO SEU CÓDIGO JAVASCRIPT A PARTIR DAQUI ...
+// (A partir da função "logout()")
 
 // Função para fazer logout
 function logout() {
@@ -1116,13 +1113,12 @@ localStorage.removeItem('googleUserToken');
 // O Dashboard só inicializa após o login
 function initializeDashboard() {
 /*
-       -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-       Sempre que uma alteração funcional for implementada neste script,
-       lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-       Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-       */
+        -- INSTRUÇÃO PARA ATUALIZAÇÃO --
+        Sempre que uma alteração funcional for implementada neste script,
+        lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
+        Exemplo: de "Rev. 5.1" para "Rev. 5.2".
+        */
 
-// --- NOVO: Exibe o card de usuário e configura o botão de logout ---
 // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
 const userInfoCard = document.getElementById('user-info-card');
 const userInfoText = document.getElementById('user-info-text');
@@ -1140,8 +1136,9 @@ if (currentUser.name) {
     userInfoCard.style.display = 'flex';
 }
 
+
 logoutButton.addEventListener('click', logout);
-// --- FIM DA NOVA LÓGICA DE USUÁRIO ---
+// --- FIM DA NOVA LÓDICA DE USUÁRIO ---
 
 
 // O código do dashboard agora é executado dentro desta função
@@ -1640,6 +1637,9 @@ const populateFilters = () => {
     }
 };
 
+// ... e assim por diante, cole todo o resto do seu código JS aqui
+// (a partir da função autoSelectSegment() até o final do script)
+
 const autoSelectSegment = (clients) => {
 if (!clients || clients.length === 0) return;
 let midEnterpriseCount = 0, smbCount = 0;
@@ -1787,7 +1787,7 @@ html += `
                                         </div>
                                     </div>
                                 </div>
-                            `;
+                                `;
 }
 }
 
@@ -2111,24 +2111,24 @@ dashboard.style.display = 'none';
 periodView.style.display = 'block';
 
 const avgCoverageCard = `
-                            <div class="card">
-                                <h3>Média de Cobertura de Carteira</h3>
-                                <div class="card-content">
-                                    <div class="metric">
-                                        <span class="metric-label">Período Analisado:</span>
-                                        <span class="metric-value">${periodName}</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Média Mensal de Cobertura:</span>
-                                        <span class="metric-value" style="font-size: 2.5rem; color: var(--primary-color);">${periodData.averageCoverage.toFixed(1)}%</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Total de Clientes Únicos no Período:</span>
-                                        <span class="metric-value">${periodData.totalUniqueClients}</span>
+                                <div class="card">
+                                    <h3>Média de Cobertura de Carteira</h3>
+                                    <div class="card-content">
+                                        <div class="metric">
+                                            <span class="metric-label">Período Analisado:</span>
+                                            <span class="metric-value">${periodName}</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Média Mensal de Cobertura:</span>
+                                            <span class="metric-value" style="font-size: 2.5rem; color: var(--primary-color);">${periodData.averageCoverage.toFixed(1)}%</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Total de Clientes Únicos no Período:</span>
+                                            <span class="metric-value">${periodData.totalUniqueClients}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                                `;
 
 let playbookCardsHtml = '';
 const playbookTitles = { 'plano': 'Planos de Ação', 'adocao': 'Atividades de Adoção', 'followup': 'Follow-Up', 'discovery': 'Discovery', 'reunioes-qbr': 'Reuniões de QBR', 'planos-sucesso': 'Planos de Sucesso', 'engajamento-smb': 'Engajamento (Contato Consolidado)', 'baixo-engajamento-mid': 'Baixo Engajamento (MID/ENT)' };
@@ -2137,32 +2137,32 @@ for (const key in playbookTitles) {
 const data = periodData.playbookTotals[key];
 if (data && (data.previsto > 0 || data.realizado > 0)) {
 playbookCardsHtml += `
-                                <div class="card">
-                                    <h3>Total: ${playbookTitles[key]}</h3>
-                                    <div class="card-content">
-                                        <div class="metric">
-                                            <span class="metric-label">Total Previsto no Período:</span>
-                                            <span class="metric-value">${data.previsto}</span>
-                                        </div>
-                                        <div class="metric">
-                                            <span class="metric-label">Total Realizado no Período:</span>
-                                            <span class="metric-value success">${data.realizado}</span>
+                                    <div class="card">
+                                        <h3>Total: ${playbookTitles[key]}</h3>
+                                        <div class="card-content">
+                                            <div class="metric">
+                                                <span class="metric-label">Total Previsto no Período:</span>
+                                                <span class="metric-value">${data.previsto}</span>
+                                            </div>
+                                            <div class="metric">
+                                                <span class="metric-label">Total Realizado no Período:</span>
+                                                <span class="metric-value success">${data.realizado}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            `;
+                                    `;
 }
 }
 
 periodView.innerHTML = `
-                            <div class="metric-group">
-                                <h2 class="group-title">Resumo do Período: ${periodName}</h2>
-                                <div class="group-content">
-                                    ${avgCoverageCard}
-                                    ${playbookCardsHtml}
+                                <div class="metric-group">
+                                    <h2 class="group-title">Resumo do Período: ${periodName}</h2>
+                                    <div class="group-content">
+                                        ${avgCoverageCard}
+                                        ${playbookCardsHtml}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                                `;
 };
 
 const updateDashboard = () => {
@@ -2229,13 +2229,13 @@ const updateDashboard = () => {
         const divergenceMarker = document.getElementById('divergence-marker');
         const divergenceText = document.getElementById('divergence-text');
         const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-        // NOVO CÓDIGO (PERMITIDO PARA TODOS)
-if (divergentClientCount > 0 && period === 'monthly') {
-    divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
-    divergenceMarker.style.display = 'flex';
-} else {
-    divergenceMarker.style.display = 'none';
-}
+        
+        if (divergentClientCount > 0 && period === 'monthly') {
+            divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
+            divergenceMarker.style.display = 'flex';
+        } else {
+            divergenceMarker.style.display = 'none';
+        }
 
         renderOKRs();
         renderOnboardingDashboard();
@@ -2288,56 +2288,56 @@ onboardingGeneralTitle.textContent = `Visão Geral: ${teamTitleMap[teamView]}`;
 onboardingActivitiesTitle.textContent = `Acompanhamento: ${teamTitleMap[teamView]}`;
 
 const cardGeral = `
-                            <div class="card">
-                                <h3>Geral do Onboarding</h3>
-                                <div class="card-content">
-                                    <div class="metric" data-metric-id="onb-total-clientes" data-metric-title="Total de Clientes em Onboarding">
-                                        <span class="metric-label">Total de Clientes:</span>
-                                        <span class="metric-value">${totalClientes}</span>
+                                <div class="card">
+                                    <h3>Geral do Onboarding</h3>
+                                    <div class="card-content">
+                                        <div class="metric" data-metric-id="onb-total-clientes" data-metric-title="Total de Clientes em Onboarding">
+                                            <span class="metric-label">Total de Clientes:</span>
+                                            <span class="metric-value">${totalClientes}</span>
+                                        </div>
+                                         <div class="metric" data-metric-id="onb-clientes-contatados" data-metric-title="Clientes Contatados em Onboarding">
+                                            <span class="metric-label">Clientes Contatados:</span>
+                                            <span class="metric-value">${clientesContatados}</span>
+                                        </div>
                                     </div>
-                                     <div class="metric" data-metric-id="onb-clientes-contatados" data-metric-title="Clientes Contatados em Onboarding">
-                                        <span class="metric-label">Clientes Contatados:</span>
-                                        <span class="metric-value">${clientesContatados}</span>
+                                     <div class="progress-bar-container" title="Cobertura de contatos na base de Onboarding: ${percCobertura.toFixed(1)}%">
+                                        <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percCobertura.toFixed(1)}%;"></div></div>
+                                        <span class="progress-percentage">${percCobertura.toFixed(1)}%</span>
                                     </div>
-                                </div>
-                                 <div class="progress-bar-container" title="Cobertura de contatos na base de Onboarding: ${percCobertura.toFixed(1)}%">
-                                    <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percCobertura.toFixed(1)}%;"></div></div>
-                                    <span class="progress-percentage">${percCobertura.toFixed(1)}%</span>
-                                </div>
-                            </div>`;
+                                </div>`;
 
 const cardContatos = `
-                            <div class="card">
-                                <h3>Contatos em Onboarding (Mês)</h3>
-                                <div class="card-content">
-                                    <div class="metric" data-metric-id="onb-contato-ligacao" data-metric-title="Contatos por Ligação/Reunião (Onboarding)">
-                                        <span class="metric-label">📞 Ligação/Reunião:</span>
-                                        <span class="metric-value">${(onboardingDataStore['onb-contato-ligacao'] || []).length}</span>
+                                <div class="card">
+                                    <h3>Contatos em Onboarding (Mês)</h3>
+                                    <div class="card-content">
+                                        <div class="metric" data-metric-id="onb-contato-ligacao" data-metric-title="Contatos por Ligação/Reunião (Onboarding)">
+                                            <span class="metric-label">📞 Ligação/Reunião:</span>
+                                            <span class="metric-value">${(onboardingDataStore['onb-contato-ligacao'] || []).length}</span>
+                                        </div>
+                                        <div class="metric" data-metric-id="onb-contato-email" data-metric-title="Contatos por E-mail/Whatsapp (Onboarding)">
+                                            <span class="metric-label">✉️ E-mail/Whatsapp:</span>
+                                            <span class="metric-value">${(onboardingDataStore['onb-contato-email'] || []).length}</span>
+                                        </div>
                                     </div>
-                                    <div class="metric" data-metric-id="onb-contato-email" data-metric-title="Contatos por E-mail/Whatsapp (Onboarding)">
-                                        <span class="metric-label">✉️ E-mail/Whatsapp:</span>
-                                        <span class="metric-value">${(onboardingDataStore['onb-contato-email'] || []).length}</span>
-                                    </div>
-                                </div>
-                            </div>`;
+                                </div>`;
 
 onboardingGeneralGrid.innerHTML = cardGeral + cardContatos;
 
 const cardAtividades = `
-                             <div class="card">
-                                <h3>Atividades em Onboarding (Mês)</h3>
-                                <div class="card-content">
-                                    <div class="metric" data-metric-id="onb-atividades-previstas" data-metric-title="Atividades Previstas (Onboarding)">
-                                        <span class="metric-label">Previstas para o Mês:</span>
-                                        <span class="metric-value">${(onboardingDataStore['onb-atividades-previstas'] || []).length}</span>
-                                    </div>
-                                    <div class="metric" data-metric-id="onb-atividades-concluidas" data-metric-title="Atividades Concluídas (Onboarding)">
-                                        <span class="metric-label">Concluídas no Mês:</span>
-                                        <span class="metric-value success">${(onboardingDataStore['onb-atividades-concluidas'] || []).length}</span>
+                                 <div class="card">
+                                    <h3>Atividades em Onboarding (Mês)</h3>
+                                    <div class="card-content">
+                                        <div class="metric" data-metric-id="onb-atividades-previstas" data-metric-title="Atividades Previstas (Onboarding)">
+                                            <span class="metric-label">Previstas para o Mês:</span>
+                                            <span class="metric-value">${(onboardingDataStore['onb-atividades-previstas'] || []).length}</span>
+                                        </div>
+                                        <div class="metric" data-metric-id="onb-atividades-concluidas" data-metric-title="Atividades Concluídas (Onboarding)">
+                                            <span class="metric-label">Concluídas no Mês:</span>
+                                            <span class="metric-value success">${(onboardingDataStore['onb-atividades-concluidas'] || []).length}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                                `;
 
 onboardingActivitiesGrid.innerHTML = cardAtividades;
 };
@@ -2373,49 +2373,49 @@ const includeOnboarding = onboardingToggle.checked;
 const onboardingContacts = dataStore['onboarding-contacts-display'] || [];
 if (includeOnboarding && onboardingContacts.length > 0) {
 onboardingMetricHtml = `
-                                <div class="metric" data-metric-id="onboarding-contacts-display" data-metric-title="Contatos de Onboarding">
-                                    <span class="metric-label"><i class="fas fa-user-plus" style="margin-right: 6px; color: var(--primary-color);"></i>Contatos Onboarding:</span>
-                                    <span class="metric-value">${onboardingContacts.length}</span>
-                                </div>
-                            `;
+                                        <div class="metric" data-metric-id="onboarding-contacts-display" data-metric-title="Contatos de Onboarding">
+                                            <span class="metric-label"><i class="fas fa-user-plus" style="margin-right: 6px; color: var(--primary-color);"></i>Contatos Onboarding:</span>
+                                            <span class="metric-value">${onboardingContacts.length}</span>
+                                        </div>
+                                    `;
 }
 
 const cardTiposDeContato = `
-                            <div class="card">
-                                <h3>Tipos de Contato (Mês)</h3>
-                                <div class="card-content">
-                                    <div class="metric" data-metric-id="contato-ligacao" data-metric-title="Contatos do CS por Ligação/Reunião">
-                                        <span class="metric-label">📞 Ligação/Reunião (CS):</span>
-                                        <span class="metric-value">
-                                            ${(dataStore['contato-ligacao'] || []).length} 
-                                            <span class="sub-metric" title="${(dataStore['ligacao-com-consolidado'] || 0)} destes contatos tiveram o playbook 'Contato Consolidado' realizado">
-                                                (<i class="fas fa-check-double" style="color: var(--secondary-color);"></i> ${(dataStore['ligacao-com-consolidado'] || 0)})
+                                <div class="card">
+                                    <h3>Tipos de Contato (Mês)</h3>
+                                    <div class="card-content">
+                                        <div class="metric" data-metric-id="contato-ligacao" data-metric-title="Contatos do CS por Ligação/Reunião">
+                                            <span class="metric-label">📞 Ligação/Reunião (CS):</span>
+                                            <span class="metric-value">
+                                                ${(dataStore['contato-ligacao'] || []).length} 
+                                                <span class="sub-metric" title="${(dataStore['ligacao-com-consolidado'] || 0)} destes contatos tiveram o playbook 'Contato Consolidado' realizado">
+                                                    (<i class="fas fa-check-double" style="color: var(--secondary-color);"></i> ${(dataStore['ligacao-com-consolidado'] || 0)})
+                                                </span>
                                             </span>
-                                        </span>
+                                        </div>
+                                        <div class="metric" data-metric-id="contato-email" data-metric-title="Contatos do CS por E-mail/Whatsapp">
+                                            <span class="metric-label">✉️ E-mail/Whatsapp (CS):</span><span class="metric-value">${(dataStore['contato-email'] || []).length}</span>
+                                        </div>
+                                        ${onboardingMetricHtml}
                                     </div>
-                                    <div class="metric" data-metric-id="contato-email" data-metric-title="Contatos do CS por E-mail/Whatsapp">
-                                        <span class="metric-label">✉️ E-mail/Whatsapp (CS):</span><span class="metric-value">${(dataStore['contato-email'] || []).length}</span>
-                                    </div>
-                                    ${onboardingMetricHtml}
-                                </div>
-                            </div>`;
+                                </div>`;
 
 generalGrid.innerHTML = `${createSimpleCard('Visão Geral da Carteira', 'total-clientes', 'Total de Clientes Únicos', (dataStore['total-clientes'] || []).length, 'cob-carteira', 'Clientes Contatados', clientesContatadosCount)} ${cardCobertura} ${senseScoreCard} ${cardTiposDeContato}`;
 
 playbookGrid.innerHTML = `
-                            ${createPrevistoRealizadoCard('Atividades de Plano de Ação', (dataStore['plano-previsto'] || []).length, (dataStore['plano-realizado'] || []).length, 'plano', null, (dataStore['plano-atrasado-concluido'] || []).length)}
-                            ${createPrevistoRealizadoCard('Atividades de Adoção', (dataStore['adocao-previsto'] || []).length, (dataStore['adocao-realizado'] || []).length, 'adocao', null, (dataStore['adocao-atrasado-concluido'] || []).length)}
-                            ${followupCard}
-                            ${(selectedSegmento !== 'MID/Enterprise') ? discoveryCard : ''}
-                        `;
+                                ${createPrevistoRealizadoCard('Atividades de Plano de Ação', (dataStore['plano-previsto'] || []).length, (dataStore['plano-realizado'] || []).length, 'plano', null, (dataStore['plano-atrasado-concluido'] || []).length)}
+                                ${createPrevistoRealizadoCard('Atividades de Adoção', (dataStore['adocao-previsto'] || []).length, (dataStore['adocao-realizado'] || []).length, 'adocao', null, (dataStore['adocao-atrasado-concluido'] || []).length)}
+                                ${followupCard}
+                                ${(selectedSegmento !== 'MID/Enterprise') ? discoveryCard : ''}
+                                `;
 
 let okrHtml = '';
 if (selectedSegmento === 'MID/Enterprise') {
 okrHtml = `
-                                ${createPrevistoRealizadoCard('Reuniões de QBR', (dataStore['reunioes-qbr-previsto'] || []).length, (dataStore['reunioes-qbr-realizado'] || []).length, 'reunioes-qbr', appGoals.qbr, (dataStore['reunioes-qbr-atrasado-concluido'] || []).length)}
-                                ${createPrevistoRealizadoCard('Planos de Sucesso', (dataStore['planos-sucesso-previsto'] || []).length, (dataStore['planos-sucesso-realizado'] || []).length, 'planos-sucesso', appGoals.successplan, (dataStore['planos-sucesso-atrasado-concluido'] || []).length)}
-                                ${createPrevistoRealizadoCard('Baixo Engajamento (MID/ENT)', (dataStore['baixo-engajamento-mid-previsto'] || []).length, (dataStore['baixo-engajamento-mid-realizado'] || []).length, 'baixo-engajamento-mid', null, (dataStore['baixo-engajamento-mid-atrasado-concluido'] || []).length)}
-                                ${labsCard}`;
+                                        ${createPrevistoRealizadoCard('Reuniões de QBR', (dataStore['reunioes-qbr-previsto'] || []).length, (dataStore['reunioes-qbr-realizado'] || []).length, 'reunioes-qbr', appGoals.qbr, (dataStore['reunioes-qbr-atrasado-concluido'] || []).length)}
+                                        ${createPrevistoRealizadoCard('Planos de Sucesso', (dataStore['planos-sucesso-previsto'] || []).length, (dataStore['planos-sucesso-realizado'] || []).length, 'planos-sucesso', appGoals.successplan, (dataStore['planos-sucesso-atrasado-concluido'] || []).length)}
+                                        ${createPrevistoRealizadoCard('Baixo Engajamento (MID/ENT)', (dataStore['baixo-engajamento-mid-previsto'] || []).length, (dataStore['baixo-engajamento-mid-realizado'] || []).length, 'baixo-engajamento-mid', null, (dataStore['baixo-engajamento-mid-atrasado-concluido'] || []).length)}
+                                        ${labsCard}`;
 } else { 
 const previstos = dataStore['engajamento-smb-previsto'] || [];
 const realizadosNoPrazo = dataStore['engajamento-smb-realizado'] || [];
@@ -2428,26 +2428,26 @@ const performancePerc = totalRealizado > 0 ? (engajados.length / totalRealizado)
 const realizadoVsPrevistoPerc = previstos.length > 0 ? (totalRealizado / previstos.length) * 100 : 0;
 
 const cardEngajamento = `
-                                <div class="card">
-                                    <h3>Engajamento (Contato Consolidado)</h3>
-                                    <div class="card-content">
-                                        <div class="metric" data-metric-id="engajamento-smb-previsto" data-metric-title="Contatos Previstos (SMB)"><span class="metric-label">Previsto:</span><span class="metric-value">${previstos.length}</span></div>
-                                        <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Total Realizado (SMB)">
-                                            <span class="metric-label">Total Realizado:</span>
-                                            <span class="metric-value">${totalRealizado} <span class="sub-metric" title="${realizadoVsPrevistoPerc.toFixed(0)}% do previsto foi realizado">(${realizadoVsPrevistoPerc.toFixed(0)}%)</span></span>
-                                        </div>
-                                        <div class="metric" data-metric-id="engajamento-smb-engajado" data-metric-title="Total Engajado (SMB)"><span class="metric-label">Total Engajado:</span><span class="metric-value success">${engajados.length}</span></div>
-                                        <div class="metric" data-metric-id="engajamento-smb-desengajado" data-metric-title="Total Desengajado (SMB)"><span class="metric-label">Total Desengajado:</span><span class="metric-value danger">${desengajados.length}</span></div>
-                                        <div class="metric">
-                                            <span class="metric-label" style="font-weight: 600;">Meta de Performance:</span>
-                                            <span class="metric-value" style="color: var(--primary-color);">${appGoals.engagement}%</span>
-                                        </div>
-                                    </div>
-                                    <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados foram classificados como 'Engajado'">
-                                        <div class="progress-bar"><div class="progress-bar-fill" style="width: ${performancePerc.toFixed(1)}%;"></div></div>
-                                        <span class="progress-percentage">${performancePerc.toFixed(1)}%</span>
-                                    </div>
-                                </div>`;
+                                        <div class="card">
+                                            <h3>Engajamento (Contato Consolidado)</h3>
+                                            <div class="card-content">
+                                                <div class="metric" data-metric-id="engajamento-smb-previsto" data-metric-title="Contatos Previstos (SMB)"><span class="metric-label">Previsto:</span><span class="metric-value">${previstos.length}</span></div>
+                                                <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Total Realizado (SMB)">
+                                                    <span class="metric-label">Total Realizado:</span>
+                                                    <span class="metric-value">${totalRealizado} <span class="sub-metric" title="${realizadoVsPrevistoPerc.toFixed(0)}% do previsto foi realizado">(${realizadoVsPrevistoPerc.toFixed(0)}%)</span></span>
+                                                </div>
+                                                <div class="metric" data-metric-id="engajamento-smb-engajado" data-metric-title="Total Engajado (SMB)"><span class="metric-label">Total Engajado:</span><span class="metric-value success">${engajados.length}</span></div>
+                                                <div class="metric" data-metric-id="engajamento-smb-desengajado" data-metric-title="Total Desengajado (SMB)"><span class="metric-label">Total Desengajado:</span><span class="metric-value danger">${desengajados.length}</span></div>
+                                                <div class="metric">
+                                                    <span class="metric-label" style="font-weight: 600;">Meta de Performance:</span>
+                                                    <span class="metric-value" style="color: var(--primary-color);">${appGoals.engagement}%</span>
+                                                </div>
+                                            </div>
+                                            <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados foram classificados como 'Engajado'">
+                                                <div class="progress-bar"><div class="progress-bar-fill" style="width: ${performancePerc.toFixed(1)}%;"></div></div>
+                                                <span class="progress-percentage">${performancePerc.toFixed(1)}%</span>
+                                            </div>
+                                        </div>`;
 okrHtml += cardEngajamento;
 
 const clientesContatadosBase = dataStore['cob-carteira'] || [];
@@ -2456,26 +2456,26 @@ if (selectedSegmento === 'SMB CAD') {
 const preenchidosModelo = dataStore['modelo-negocio-preenchido'] || [];
 const percModelo = clientesContatadosBase.length > 0 ? (preenchidosModelo.length / clientesContatadosBase.length) * 100 : 0;
 const cardModeloNegocio = `
-                                    <div class="card">
-                                        <h3>Adoção do Modelo de Negócio</h3>
-                                        <div class="card-content">
-                                            <div class="metric" data-metric-id="modelo-negocio-preenchido" data-metric-title="Clientes com Modelo Preenchido">
-                                                <span class="metric-label">Preenchido:</span>
-                                                <span class="metric-value success">${preenchidosModelo.length}</span>
+                                            <div class="card">
+                                                <h3>Adoção do Modelo de Negócio</h3>
+                                                <div class="card-content">
+                                                    <div class="metric" data-metric-id="modelo-negocio-preenchido" data-metric-title="Clientes com Modelo Preenchido">
+                                                        <span class="metric-label">Preenchido:</span>
+                                                        <span class="metric-value success">${preenchidosModelo.length}</span>
+                                                    </div>
+                                                    <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
+                                                        <span class="metric-label">Total Avaliado:</span>
+                                                        <span class="metric-value">${clientesContatadosBase.length}</span>
+                                                    </div>
+                                                </div>
+                                                 <div class="progress-bar-container" title="${percModelo.toFixed(1)}% dos clientes contatados possuem modelo de negócio definido">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-bar-fill" style="width: ${percModelo.toFixed(1)}%;"></div>
+                                                    </div>
+                                                    <span class="progress-percentage">${percModelo.toFixed(1)}%</span>
+                                                </div>
                                             </div>
-                                            <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
-                                                <span class="metric-label">Total Avaliado:</span>
-                                                <span class="metric-value">${clientesContatadosBase.length}</span>
-                                            </div>
-                                        </div>
-                                         <div class="progress-bar-container" title="${percModelo.toFixed(1)}% dos clientes contatados possuem modelo de negócio definido">
-                                            <div class="progress-bar">
-                                                <div class="progress-bar-fill" style="width: ${percModelo.toFixed(1)}%;"></div>
-                                            </div>
-                                            <span class="progress-percentage">${percModelo.toFixed(1)}%</span>
-                                        </div>
-                                    </div>
-                                `;
+                                        `;
 okrHtml += cardModeloNegocio;
 }
 
@@ -2483,26 +2483,26 @@ if (selectedSegmento === 'SMB CAD' || selectedSegmento === 'SMB Multiprodutos') 
 const preenchidosPotencial = dataStore['cliente-potencial-preenchido'] || [];
 const percPotencial = clientesContatadosBase.length > 0 ? (preenchidosPotencial.length / clientesContatadosBase.length) * 100 : 0;
 const cardClientePotencial = `
-                                    <div class="card">
-                                        <h3>Mapeamento de Cliente Potencial</h3>
-                                        <div class="card-content">
-                                            <div class="metric" data-metric-id="cliente-potencial-preenchido" data-metric-title="Clientes com Potencial Mapeado">
-                                                <span class="metric-label">Mapeado:</span>
-                                                <span class="metric-value success">${preenchidosPotencial.length}</span>
+                                            <div class="card">
+                                                <h3>Mapeamento de Cliente Potencial</h3>
+                                                <div class="card-content">
+                                                    <div class="metric" data-metric-id="cliente-potencial-preenchido" data-metric-title="Clientes com Potencial Mapeado">
+                                                        <span class="metric-label">Mapeado:</span>
+                                                        <span class="metric-value success">${preenchidosPotencial.length}</span>
+                                                    </div>
+                                                    <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
+                                                        <span class="metric-label">Total Avaliado:</span>
+                                                        <span class="metric-value">${clientesContatadosBase.length}</span>
+                                                    </div>
+                                                </div>
+                                                 <div class="progress-bar-container" title="${percPotencial.toFixed(1)}% dos clientes contatados possuem potencial mapeado">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-bar-fill" style="width: ${percPotencial.toFixed(1)}%;"></div>
+                                                    </div>
+                                                    <span class="progress-percentage">${percPotencial.toFixed(1)}%</span>
+                                                </div>
                                             </div>
-                                            <div class="metric" data-metric-id="cob-carteira" data-metric-title="Total de Clientes Contatados no Mês">
-                                                <span class="metric-label">Total Avaliado:</span>
-                                                <span class="metric-value">${clientesContatadosBase.length}</span>
-                                            </div>
-                                        </div>
-                                         <div class="progress-bar-container" title="${percPotencial.toFixed(1)}% dos clientes contatados possuem potencial mapeado">
-                                            <div class="progress-bar">
-                                                <div class="progress-bar-fill" style="width: ${percPotencial.toFixed(1)}%;"></div>
-                                            </div>
-                                            <span class="progress-percentage">${percPotencial.toFixed(1)}%</span>
-                                        </div>
-                                    </div>
-                                `;
+                                        `;
 okrHtml += cardClientePotencial;
 }
 
@@ -2558,35 +2558,35 @@ if(goal !== null && currentUser.isManager) metaHtml = `<div class="metric"><span
 let overdueHtml = '';
 if (overdueCount > 0) {
 overdueHtml = `
-                                <div class="metric overdue-metric" data-metric-id="${metricIdPrefix}-atrasado-concluido" data-metric-title="${title} (Concluídas com Atraso)" title="${overdueCount} atividades concluídas estavam previstas para meses anteriores">
-                                    <span class="metric-label"><i class="fas fa-history"></i>Concluídas (Atraso):</span>
-                                    <span class="metric-value">${overdueCount}</span>
-                                </div>
-                            `;
+                                        <div class="metric overdue-metric" data-metric-id="${metricIdPrefix}-atrasado-concluido" data-metric-title="${title} (Concluídas com Atraso)" title="${overdueCount} atividades concluídas estavam previstas para meses anteriores">
+                                            <span class="metric-label"><i class="fas fa-history"></i>Concluídas (Atraso):</span>
+                                            <span class="metric-value">${overdueCount}</span>
+                                        </div>
+                                    `;
 }
 
 const trendButtonHtml = currentUser.isManager ? `<button class="trend-chart-button" data-metric-id="${metricIdPrefix}" data-metric-title="${title}" data-metric-type="playbook" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>` : '';
 
 return `
-                            <div class="card">
-                                <h3>${title}${trendButtonHtml}</h3>
-                                <div class="card-content">
-                                    <div class="metric" data-metric-id="${metricIdPrefix}-realizado" data-metric-title="${title} (Realizado no Prazo)">
-                                        <span class="metric-label">Realizado (Prazo):</span>
-                                        <span class="metric-value success">${realizadoNoPrazo}</span>
+                                <div class="card">
+                                    <h3>${title}${trendButtonHtml}</h3>
+                                    <div class="card-content">
+                                        <div class="metric" data-metric-id="${metricIdPrefix}-realizado" data-metric-title="${title} (Realizado no Prazo)">
+                                            <span class="metric-label">Realizado (Prazo):</span>
+                                            <span class="metric-value success">${realizadoNoPrazo}</span>
+                                        </div>
+                                        ${overdueHtml}
+                                        <div class="metric" data-metric-id="${metricIdPrefix}-previsto" data-metric-title="${title} (Previsto)">
+                                            <span class="metric-label">Previsto:</span>
+                                            <span class="metric-value">${previsto}</span>
+                                        </div>
+                                        ${metaHtml}
                                     </div>
-                                    ${overdueHtml}
-                                    <div class="metric" data-metric-id="${metricIdPrefix}-previsto" data-metric-title="${title} (Previsto)">
-                                        <span class="metric-label">Previsto:</span>
-                                        <span class="metric-value">${previsto}</span>
+                                    <div class="progress-bar-container" title="Progresso de atividades previstas para o mês. Realizado (Prazo): ${realizadoNoPrazo}. Total Realizado (com atrasos): ${totalRealizado}.">
+                                        <div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div>
+                                        <span class="progress-percentage">${percentage.toFixed(0)}%</span>
                                     </div>
-                                    ${metaHtml}
-                                </div>
-                                <div class="progress-bar-container" title="Progresso de atividades previstas para o mês. Realizado (Prazo): ${realizadoNoPrazo}. Total Realizado (com atrasos): ${totalRealizado}.">
-                                    <div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div>
-                                    <span class="progress-percentage">${percentage.toFixed(0)}%</span>
-                                </div>
-                            </div>`;
+                                </div>`;
 };
 
 const createSimpleCard = (title, id1, label1, value1, id2, label2, value2) => {
@@ -2602,19 +2602,19 @@ if (!data || data.length === 0) return '<p style="padding: 20px; text-align: cen
 const headers = Object.keys(data[0]);
 const headerHtml = `<thead><tr>${headers.map(h => `<th><span>${h}</span></th>`).join('')}</tr></thead>`;
 const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => {
-                                const cellValue = row[h];
-                                let displayValue = '';
-                                if (cellValue instanceof Date) {
-                                    displayValue = formatDate(cellValue);
-                                } else if (cellValue !== null && cellValue !== undefined) {
-                                    displayValue = cellValue;
-                                }
-                                
-                                if(normalizeText(h) === 'cliente') {
-                                    return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
-                                }
-                                return `<td>${displayValue}</td>`;
-                            }).join('')}</tr>`).join('')}</tbody>`;
+                                        const cellValue = row[h];
+                                        let displayValue = '';
+                                        if (cellValue instanceof Date) {
+                                            displayValue = formatDate(cellValue);
+                                        } else if (cellValue !== null && cellValue !== undefined) {
+                                            displayValue = cellValue;
+                                        }
+                                        
+                                        if(normalizeText(h) === 'cliente') {
+                                            return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
+                                        }
+                                        return `<td>${displayValue}</td>`;
+                                    }).join('')}</tr>`).join('')}</tbody>`;
 return `<table class="data-table">${headerHtml}${bodyHtml}</table>`;
 };
 
@@ -2695,12 +2695,12 @@ if(!clientData) return;
 document.getElementById('client-360-name').textContent = clientData.Cliente;
 const infoContainer = document.getElementById('client-360-info');
 infoContainer.innerHTML = `
-                                <div class="client-info-item"><span class="client-info-label">CS Responsável</span><span class="client-info-value">${clientData.CS || 'N/A'}</span></div>
-                                <div class="client-info-item"><span class="client-info-label">ISM Responsável</span><span class="client-info-value">${clientData.ISM || 'N/A'}</span></div>
-                                <div class="client-info-item"><span class="client-info-label">Segmento</span><span class="client-info-value">${clientData.Segmento || 'N/A'}</span></div>
-                                <div class="client-info-item"><span class="client-info-label">Sense Score</span><span class="client-info-value">${clientData['Sense Score'] || 'N/A'}</span></div>
-                                <div class="client-info-item"><span class="client-info-label">Fase</span><span class="client-info-value">${clientData.Fase || 'N/A'}</span></div>
-                            `;
+                                        <div class="client-info-item"><span class="client-info-label">CS Responsável</span><span class="client-info-value">${clientData.CS || 'N/A'}</span></div>
+                                        <div class="client-info-item"><span class="client-info-label">ISM Responsável</span><span class="client-info-value">${clientData.ISM || 'N/A'}</span></div>
+                                        <div class="client-info-item"><span class="client-info-label">Segmento</span><span class="client-info-value">${clientData.Segmento || 'N/A'}</span></div>
+                                        <div class="client-info-item"><span class="client-info-label">Sense Score</span><span class="client-info-value">${clientData['Sense Score'] || 'N/A'}</span></div>
+                                        <div class="client-info-item"><span class="client-info-label">Fase</span><span class="client-info-value">${clientData.Fase || 'N/A'}</span></div>
+                                    `;
 
 const clientActivities = rawActivities
 .filter(a => a.ClienteCompleto === clientName.toLowerCase())
@@ -2883,7 +2883,7 @@ showTrendChart(metricId, metricTitle, metricType);
 
 document.getElementById('divergence-marker').addEventListener('click', () => {
 showDetailsModal('divergent-activities', 'Atividades para Clientes Fora da Carteira');
-});       
+});        
 
 document.getElementById('settings-button').addEventListener('click', () => {
 loadGoals();
@@ -2959,29 +2959,29 @@ const selectedSegmento = selectSegmento.value;
 const includeOnboarding = onboardingToggle.checked;
 
 const indicadoresGeraisHtml = `
-                                <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
-                                <table>
-                                    <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
-                                    <tbody>
-                                        <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
-                                        <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
-                                        <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
-                                        <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
-                                        <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
-                                    </tbody>
-                                </table>`;
+                                        <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
+                                        <table>
+                                            <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
+                                                <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
+                                                <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
+                                                <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
+                                                <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
+                                            </tbody>
+                                        </table>`;
 
 const tiposDeContatoHtml = `
-                                <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
-                                <table>
-                                    <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
-                                    <tbody>
-                                        <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
-                                        <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
-                                        <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
-                                        ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
-                                    </tbody>
-                                </table>`;
+                                        <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
+                                        <table>
+                                            <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
+                                                <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
+                                                <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
+                                                ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
+                                            </tbody>
+                                        </table>`;
 
 const playbooksData = [];
 const playbookDefs = {
@@ -3069,13 +3069,13 @@ const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
 csSelectionList.innerHTML = '';
 [...csSet].sort().forEach(cs => {
 csSelectionList.innerHTML += `
-                                <div class="cs-item">
-                                    <label>
-                                        <input type="checkbox" class="cs-checkbox" value="${cs}" checked>
-                                        ${cs}
-                                    </label>
-                                </div>
-                            `;
+                                        <div class="cs-item">
+                                            <label>
+                                                <input type="checkbox" class="cs-checkbox" value="${cs}" checked>
+                                                ${cs}
+                                            </label>
+                                        </div>
+                                    `;
 });
 
 showModal(bulkExportModal);
