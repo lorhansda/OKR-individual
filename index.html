@@ -970,6 +970,21 @@ const dbHelper = {
                 console.error("Erro ao abrir o IndexedDB:", event.target.error);
                 reject("Erro no IndexedDB.");
             };
+            // ... código do dbHelper ...
+
+// INÍCIO DO NOVO BLOCO DE CADASTRO MANUAL
+// Adicione aqui os e-mails que não são detectados automaticamente.
+const manualEmailToCsMap = {
+    "email.dificil@provedor.com": "Nome Completo do CS",
+    "contato@empresa.com.br": "Outro CS",
+    // Exemplo:
+    // "joana.s@emailaleatorio.net": "Joana Souza"
+};
+// FIM DO NOVO BLOCO
+
+// --- LOGIN AUTHENTICATION SCRIPT ---
+let currentUser = {
+// ... resto do seu código ...
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
@@ -1056,7 +1071,7 @@ currentUser.email = decodedToken.email;
 currentUser.name = decodedToken.name;
 
 // Definição de acesso de gestor
-const managerEmails = ['lorhanska@gmail.com', 'lorhan.sda@gmail.com'];
+const managerEmails = ['lorhanska@gmail.com', 'lorhan.sda@gmail.com','elianeokr@gmail.com'];
 currentUser.isManager = managerEmails.includes(currentUser.email);
 
 // Esconde a tela de login e exibe o dashboard
@@ -1552,35 +1567,39 @@ const populateFilters = () => {
         selectCS.appendChild(option); 
     });
 
-    // ### NOVA LÓGICA CORRIGIDA PARA NOMES COMPOSTOS ###
     if (!currentUser.isManager) {
-        const emailIdentifier = normalizeText(currentUser.email.split('@')[0]);
         let foundCS = null;
 
-        for (const csName of sortedCS) {
-            // Divide o nome do CS em partes (ex: "Lorhan Almeida" -> ["lorhan", "almeida"])
-            const csNameParts = normalizeText(csName).split(' ');
-
-            // Verifica se alguma parte do nome do CS está contida no e-mail
-            for (const part of csNameParts) {
-                // Adicionada uma verificação para ignorar partes muito pequenas (ex: "de", "da")
-                if (part.length > 2 && emailIdentifier.includes(part)) {
-                    foundCS = csName;
-                    break; // Sai do loop das "partes"
+        // 1. PRIMEIRO: Tenta encontrar no mapa manual (maior prioridade)
+        if (manualEmailToCsMap[currentUser.email]) {
+            foundCS = manualEmailToCsMap[currentUser.email];
+            console.log(`CS encontrado via mapa manual: ${foundCS}`);
+        } 
+        // 2. SEGUNDO: Se não estiver no mapa, tenta a detecção automática
+        else {
+            const emailIdentifier = normalizeText(currentUser.email.split('@')[0]);
+            for (const csName of sortedCS) {
+                const csNameParts = normalizeText(csName).split(' ');
+                for (const part of csNameParts) {
+                    if (part.length > 2 && emailIdentifier.includes(part)) {
+                        foundCS = csName;
+                        break;
+                    }
                 }
-            }
-
-            if (foundCS) {
-                break; // Sai do loop principal dos "CSs"
+                if (foundCS) {
+                    break;
+                }
             }
         }
         
-        if (foundCS) {
+        // 3. APLICA O RESULTADO
+        if (foundCS && sortedCS.includes(foundCS)) {
             selectCS.value = foundCS;
-            console.log(`CS auto-selecionado via e-mail: ${foundCS} para o usuário ${currentUser.name}`);
+            if (!manualEmailToCsMap[currentUser.email]) {
+                console.log(`CS auto-selecionado via e-mail: ${foundCS} para o usuário ${currentUser.name}`);
+            }
         } else {
-            // A mensagem de erro que você viu no console
-            console.warn(`Nenhum CS correspondente encontrado no e-mail ${currentUser.email}.`);
+            console.warn(`Nenhum CS correspondente encontrado para o e-mail ${currentUser.email}. Verifique o cadastro manual se necessário.`);
         }
 
         selectCS.disabled = true;
