@@ -1108,14 +1108,21 @@ function initializeDashboard() {
        */
 
 // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
+// --- NOVO: Exibe o card de usuário e configura o botão de logout ---
 const userInfoCard = document.getElementById('user-info-card');
 const userInfoText = document.getElementById('user-info-text');
 const logoutButton = document.getElementById('logout-button');
 
 if (currentUser.name) {
-// Adiciona um ícone e o nome do usuário ao card
-userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
-userInfoCard.style.display = 'flex';
+    // Adiciona um ícone e o nome do usuário ao card
+    userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
+    
+    // ADICIONADO: Verifica se o usuário é gestor e insere a etiqueta
+    if (currentUser.isManager) {
+        userInfoCard.insertAdjacentHTML('beforeend', '<span class="admin-badge">Login ADM</span>');
+    }
+
+    userInfoCard.style.display = 'flex';
 }
 
 logoutButton.addEventListener('click', logout);
@@ -3099,6 +3106,17 @@ if (!currentUser.isManager) {
     }
 }
 } 
+</script>
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6862f529ad6c8f190c6f8c38/1iv18rasf';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
 </script>
 </body>
 </html>
