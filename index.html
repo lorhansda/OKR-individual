@@ -1527,69 +1527,53 @@ selectISM.appendChild(option);
 };
 
 const populateFilters = () => {
-    const csSet = new Set(rawClients.map(d => d.CS?.trim()).filter(Boolean));
+    const csSet = new Set(rawClients.map(d => d.CS).filter(Boolean));
     const selectSquad = document.getElementById('select-squad');
-    selectCS.innerHTML = '';
+    selectCS.innerHTML = ''; 
 
     if (currentUser.isManager) {
         selectCS.innerHTML += '<option value="Todos">Todos os CS</option>';
     }
 
     const sortedCS = [...csSet].sort();
-    sortedCS.forEach(cs => {
-        const option = document.createElement('option');
-        option.value = cs;
-        option.textContent = cs;
-        selectCS.appendChild(option);
+    sortedCS.forEach(cs => { 
+        const option = document.createElement('option'); 
+        option.value = cs; 
+        option.textContent = cs; 
+        selectCS.appendChild(option); 
     });
 
-    // ### LÓGICA DE SELEÇÃO AUTOMÁTICA FINAL BASEADA NO TEMPLATE DE E-MAIL ###
+    // ### NOVA LÓGICA DE SELEÇÃO AUTOMÁTICA DO CS VIA E-MAIL ###
     if (!currentUser.isManager) {
-        let bestMatch = null;
-        const normalizedEmailUser = normalizeText(currentUser.email.split('@')[0]);
+        // 1. Pega a parte do e-mail antes do '@' e a normaliza (minúsculas, sem acentos).
+        const emailIdentifier = normalizeText(currentUser.email.split('@')[0]);
+        let foundCS = null;
 
-        // 1. Extrai o identificador do e-mail com base no delimitador "okr"
-        const okrIndex = normalizedEmailUser.indexOf('okr');
-        
-        if (okrIndex !== -1) {
-            const emailIdentifier = normalizedEmailUser.substring(0, okrIndex);
-
-            // 2. Ordena a lista de CSs pelo comprimento do nome, do maior para o menor.
-            // Isso garante que "Julia Haill" seja verificado antes de "Julia".
-            const csListSortedByLength = [...sortedCS].sort((a, b) => b.length - a.length);
-
-            // 3. Encontra a correspondência exata entre o identificador do e-mail e o nome do CS (sem espaços)
-            for (const cs of csListSortedByLength) {
-                const normalizedCSIdentifier = normalizeText(cs).replace(/\s/g, '');
-                if (emailIdentifier === normalizedCSIdentifier) {
-                    bestMatch = cs;
-                    break; // Encontrou a correspondência exata e mais específica, então para.
-                }
+        // 2. Procura na lista de CSs disponíveis.
+        for (const csName of sortedCS) {
+            const normalizedCsName = normalizeText(csName);
+            
+            // 3. Verifica se o identificador do e-mail CONTÉM o nome do CS.
+            // Ex: 'testedeokr.kelly' inclui 'kelly'.
+            if (emailIdentifier.includes(normalizedCsName)) {
+                foundCS = csName;
+                break; // Para a busca ao encontrar a primeira correspondência.
             }
         }
         
-        // Aplica a correspondência encontrada
-        if (bestMatch) {
-            selectCS.value = bestMatch;
-            console.log(`CS auto-selecionado via template de e-mail: ${bestMatch}`);
+        // 4. Se encontrou uma correspondência, define como o valor do seletor.
+        if (foundCS) {
+            selectCS.value = foundCS;
+            console.log(`CS auto-selecionado via e-mail: ${foundCS} para o usuário ${currentUser.name}`);
         } else {
-            // Se a lógica do template falhar, executa uma última tentativa com o nome
-            console.warn(`Não foi possível identificar o CS pelo template de e-mail (${currentUser.email}). Tentando pelo nome de usuário...`);
-            const nameParts = currentUser.name.split(' ').map(part => normalizeText(part));
-            for (const part of nameParts) {
-                const nameMatch = sortedCS.find(cs => normalizeText(cs) === part);
-                if (nameMatch) {
-                    bestMatch = nameMatch;
-                    break;
-                }
-            }
-            if(bestMatch) selectCS.value = bestMatch;
-            else console.error(`Falha total ao identificar o CS para o usuário ${currentUser.name}. Verifique o nome na planilha e o e-mail.`);
+            // Se não encontrar, exibe um aviso no console.
+            console.warn(`Nenhum CS correspondente encontrado no e-mail ${currentUser.email}.`);
+            // Veja a sugestão abaixo para lidar com este caso.
         }
 
         selectCS.disabled = true;
     }
-    // ### FIM DA CORREÇÃO ###
+    // ### FIM DO AJUSTE ###
 
     if (currentUser.isManager) {
         const squadSet = new Set(rawClients.map(d => d['Squad CS']).filter(Boolean));
@@ -1613,7 +1597,7 @@ const populateFilters = () => {
     selectMonth.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
 
     const allDates = [...rawActivities.map(a => a.PrevisaoConclusao), ...rawActivities.map(a => a.ConcluidaEm)];
-    const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a, b) => b - a);
+    const years = [...new Set(allDates.map(d => d?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
     selectYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
 
     const today = new Date();
