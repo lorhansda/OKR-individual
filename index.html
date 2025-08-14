@@ -2203,7 +2203,7 @@ const updateDashboard = () => {
         const divergenceMarker = document.getElementById('divergence-marker');
         const divergenceText = document.getElementById('divergence-text');
         const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-        if (divergentClientCount > 0 && period === 'monthly' && currentUser.isManager) {
+        if (divergentClientCount > 0 && period === 'monthly' {
             divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
             divergenceMarker.style.display = 'flex';
         } else {
