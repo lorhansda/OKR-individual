@@ -385,7 +385,7 @@ color: var(--primary-color);
 .card h3:contains("Planos de Sucesso")::before { content: '\f19d'; }
 .card h3:contains("Baixo Engajamento")::before { content: '\f7a4'; }
 .card h3:contains("Geral do Onboarding")::before { content: '\f500'; }
-.card h3:contains("Contatos em Onboarding")::before { content: '\f2b9'; }
+.card h3:contains(" em Onboarding")::before { content: '\f2b9'; }
 .card h3:contains("Atividades em Onboarding")::before { content: '\f0ae'; }
 .card h3:contains("Média de Cobertura")::before { content: '\f51a'; }
 .card h3:contains("Total:")::before { content: '\f681'; }
@@ -693,23 +693,40 @@ opacity: 1;
 }
 /* FIM CSS NOVO */
 
+/* --- MARCADOR DE VERSÃO --- */
+#app-version-marker {
+    position: fixed;
+    bottom: 10px;
+    left: 15px;  /* <-- MUDANÇA AQUI: de 'right' para 'left' */
+    background-color: var(--card-bg-color);
+    color: var(--text-light-color);
+    padding: 5px 12px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    z-index: 1001;
+    opacity: 0.8;
+}
+
 </style>
 </head>
 <body>
+        <div id="app-version-marker"></div> 
 <div id="login-container">
     <h1>Dashboard de OKRs</h1>
     <p>Por favor, faça login com sua conta Google para acessar os dados de performance.</p>
     <div id="g_id_onload"
-        data-client_id="232267534625-oju4j8ob02rn6tim24tcdas26c5rh3j4.apps.googleusercontent.com"
-        data-callback="handleCredentialResponse">
+         data-client_id="232267534625-oju4j8ob02rn6tim24tcdas26c5rh3j4.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
     </div>
     <div class="g_id_signin"
-        data-type="standard"
-        data-size="large"
-        data-theme="outline"
-        data-text="sign_in_with"
-        data-shape="rectangular"
-        data-logo_alignment="left">
+         data-type="standard"
+         data-size="large"
+         data-theme="outline"
+         data-text="sign_in_with"
+         data-shape="rectangular"
+         data-logo_alignment="left">
     </div>
 
     <button id="force-clear-button" style="
@@ -968,6 +985,7 @@ opacity: 1;
 </div>
 </div>
 </div> 
+
 <script>
 // --- SCRIPT DE LIMPEZA FORÇADA E CONTROLE DE VERSÃO ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -1178,7 +1196,9 @@ localStorage.removeItem('googleUserToken');
 // O Dashboard só inicializa após o login
 async function initializeDashboard() {
     // --- CONTROLE DE VERSÃO E LIMPEZA AUTOMÁTICA DE CACHE ---
-    const APP_VERSION = '1.0'; // IMPORTANTE: Mude este número a cada nova publicação (ex: '1.1', '1.2')
+    // IMPORTANTE: Mude este número a cada nova publicação (ex: '1.1.1', '1.2.0')
+    const APP_VERSION = '1.1.0'; 
+    
     const storedVersion = localStorage.getItem('appVersion');
 
     if (storedVersion !== APP_VERSION) {
@@ -1199,14 +1219,13 @@ async function initializeDashboard() {
         window.location.reload(); // Recarrega a página com o cache limpo
         return; // Impede que o resto do script seja executado com dados antigos
     }
-    // --- FIM DO CONTROLE DE VERSÃO ---
 
-/*
-        -- INSTRUÇÃO PARA ATUALIZAÇÃO --
-        Sempre que uma alteração funcional for implementada neste script,
-        lembre-se de incrementar o número da revisão no HTML, no elemento <div class="revision-marker">.
-        Exemplo: de "Rev. 5.1" para "Rev. 5.2".
-        */
+    // --- Exibe o marcador de versão ---
+    const versionMarker = document.getElementById('app-version-marker');
+    if (versionMarker) {
+        versionMarker.textContent = `Versão: ${APP_VERSION}`;
+    }
+    // --- Fim do novo código ---
 
 // --- NOVO: Exibe o card de usuário e configura o botão de logout ---
 const userInfoCard = document.getElementById('user-info-card');
@@ -1216,7 +1235,7 @@ const logoutButton = document.getElementById('logout-button');
 if (currentUser.name) {
     // Adiciona um ícone e o nome do usuário ao card
     userInfoText.innerHTML = `<i class="fas fa-user-check" style="margin-right: 8px; color: var(--secondary-color);"></i> ${currentUser.name}`;
-   
+    
     // ADICIONADO: Verifica se o usuário é gestor e insere a etiqueta
     if (currentUser.isManager) {
         userInfoCard.insertAdjacentHTML('beforeend', '<span class="admin-badge">Login ADM</span>');
@@ -1413,7 +1432,7 @@ const buildCsToSquadMap = () => {
 
     allCSs.forEach(csName => {
         const clientsOfCS = rawClients.filter(c => c.CS === csName);
-       
+        
         if (!clientsOfCS.some(c => c['Squad CS'])) {
             return;
         }
@@ -1434,7 +1453,7 @@ const buildCsToSquadMap = () => {
                 majoritySquad = squad;
             }
         }
-       
+        
         if (majoritySquad) {
             csToSquadMap.set(csName, majoritySquad);
         }
@@ -1483,13 +1502,13 @@ const processInitialData = () => {
     tabsContainer.style.display = 'flex';
     const selectSquad = document.getElementById('select-squad');
     [selectCS, selectSquad, selectSegmento, selectMonth, selectYear, onboardingToggle, selectPeriod].forEach(el => el.disabled = false);
-   
+    
     if (!currentUser.isManager) {
         selectCS.disabled = true;
     }
-   
+    
     [selectOnboardingTeam, selectISM].forEach(el => el.disabled = false);
-   
+    
     updateDashboard();
     renderOverdueView();
 };
@@ -1533,7 +1552,7 @@ const processAndCacheFiles = () => {
     if (atividadesFile && clientesFile) {
         // Primeiro, processa os arquivos para a sessão atual
         attemptProcess();
-       
+        
         // Em seguida, salva em cache para as próximas sessões
         const now = new Date();
         Promise.all([
@@ -1573,20 +1592,20 @@ const loadDataFromCache = async () => {
 
             const atividadesLabel = document.querySelector('label[for="file-atividades"]');
             const clientesLabel = document.querySelector('label[for="file-clientes"]');
-           
+            
             atividadesLabel.innerHTML = `<i class="fas fa-database" style="color: var(--secondary-color);"></i> 1. Atividades (Cache)`;
             clientesLabel.innerHTML = `<i class="fas fa-database" style="color: var(--secondary-color);"></i> 2. Clientes (Cache)`;
 
             fileAtividadesInput.parentElement.title = `Arquivo em cache: ${atividadesFile.name}`;
             fileClientesInput.parentElement.title = `Arquivo em cache: ${clientesFile.name}`;
-           
+            
             fileAtividadesInput.disabled = true;
             fileClientesInput.disabled = true;
 
             if (cachedTimestamp) {
                 displayLastLoadTime(cachedTimestamp);
             }
-           
+            
             attemptProcess();
         } else {
             console.log("Nenhum arquivo em cache encontrado. Aguardando upload.");
@@ -1609,7 +1628,9 @@ clearCacheButton.addEventListener('click', () => {
     }
 });
 
-loadDataFromCache();
+// AJUSTE: Carregamento automático de cache foi desativado conforme solicitado para evitar instabilidades.
+// A linha abaixo foi comentada.
+// loadDataFromCache();
 
 const updateIsmFilter = () => {
 const teamView = selectOnboardingTeam.value;
@@ -1637,7 +1658,7 @@ selectISM.appendChild(option);
 const populateFilters = () => {
     // Adicionado .trim() para remover espaços em branco do nome do CS
     const csSet = new Set(rawClients.map(d => d.CS && d.CS.trim()).filter(Boolean));
-   
+    
     const selectSquad = document.getElementById('select-squad');
     selectCS.innerHTML = ''; 
 
@@ -1677,7 +1698,7 @@ const populateFilters = () => {
                 }
             }
         }
-       
+        
         // 3. APLICA O RESULTADO
         if (foundCS && sortedCS.includes(foundCS)) {
             selectCS.value = foundCS;
@@ -2274,7 +2295,7 @@ const updateDashboard = () => {
 
         const selectedCS = selectCS.value;
         let filteredClients = rawClients;
-       
+        
         let csForCalc = selectedCS;
 
         if (currentUser.isManager) {
@@ -2289,7 +2310,7 @@ const updateDashboard = () => {
         else {
             filteredClients = rawClients.filter(d => d.CS?.trim() === selectedCS);
         }
-       
+        
         dataStore = {};
         Object.assign(dataStore, calculateMetricsForPeriod(mesSelecionado, anoSelecionado, rawActivities, filteredClients, csForCalc, includeOnboarding));
 
@@ -2318,7 +2339,7 @@ const updateDashboard = () => {
         const divergenceMarker = document.getElementById('divergence-marker');
         const divergenceText = document.getElementById('divergence-text');
         const divergentClientCount = new Set(divergentActivities.map(a => a.ClienteCompleto)).size;
-       
+        
         if (divergentClientCount > 0 && period === 'monthly') {
             divergenceText.textContent = `Atenção: ${divergentClientCount} clientes fora da carteira receberam atividades neste mês. Clique para ver detalhes.`;
             divergenceMarker.style.display = 'flex';
@@ -2431,14 +2452,6 @@ const cardAtividades = `
 onboardingActivitiesGrid.innerHTML = cardAtividades;
 };
 
-/*
-        -- ALTERAÇÃO DE CÓDIGO --
-        A função 'renderOKRs' foi modificada para implementar a visualização
-        solicitada no card de 'Cobertura de Carteira', incluindo a visão
-        de clientes com e sem onboarding, o cálculo de clientes a contatar
-        para a meta e quantos faltam.
-        */
-// ... (código existente acima) ...
 
 const renderOKRs = () => {
     const selectedSegmento = selectSegmento.value;
@@ -2459,12 +2472,11 @@ const renderOKRs = () => {
     const totalLabsBaseComp = dataStore['total-labs-eligible_comp'] || 0;
     const labsRealizadoPerc_comp = totalLabsBaseComp > 0 ? ((dataStore['ska-labs-realizado-list_comp']?.length || 0) / totalLabsBaseComp) * 100 : null;
 
-    // NOVO CÁLCULO: Clientes Faltantes para a meta de cobertura
     const metaCobertura = appGoals.coverage / 100;
     const clientesParaAtingirMeta = Math.max(0, Math.ceil(totalClientesUnicosCS * metaCobertura));
     const clientesFaltantes = Math.max(0, clientesParaAtingirMeta - clientesContatadosCount);
 
-    const cardCobertura = createOkrCard('Cobertura de Carteira', cobCarteiraPerc, appGoals.coverage, '%', 'cob-carteira', null, null, cobCarteiraPerc_comp, clientesFaltantes); // NOVO PARÂMETRO
+    const cardCobertura = createOkrCard('Cobertura de Carteira', cobCarteiraPerc, appGoals.coverage, '%', 'cob-carteira', null, null, cobCarteiraPerc_comp, clientesFaltantes, selectedSegmento);
     const senseScoreCard = createOkrCard('Média Sense Score', sensescore_avg, appGoals.sensescore, ' pts', 'sensescore-avg', sensescore_avg.toFixed(1), null, sensescore_comp);
     const labsCard = createOkrCard('Participação SKA LABS (Tri)', labsRealizadoPerc, appGoals.labs, '%', 'ska-labs-realizado-list', labsRealizadoCount, totalLabsBase, labsRealizadoPerc_comp);
 
@@ -2535,10 +2547,15 @@ const renderOKRs = () => {
                 <h3>Engajamento (Contato Consolidado)</h3>
                 <div class="card-content">
                     <div class="metric" data-metric-id="engajamento-smb-previsto" data-metric-title="Contatos Previstos (SMB)"><span class="metric-label">Previsto:</span><span class="metric-value">${previstos.length}</span></div>
-                    <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Total Realizado (SMB)">
-                        <span class="metric-label">Total Realizado:</span>
-                        <span class="metric-value">${totalRealizado} <span class="sub-metric" title="${realizadoVsPrevistoPerc.toFixed(0)}% do previsto foi realizado">(${realizadoVsPrevistoPerc.toFixed(0)}%)</span></span>
+                    <div class="metric" data-metric-id="engajamento-smb-realizado" data-metric-title="Realizado no Prazo (SMB)">
+                        <span class="metric-label">Realizado (Prazo):</span>
+                        <span class="metric-value success">${realizadosNoPrazo.length}</span>
                     </div>
+                    ${realizadosAtrasado.length > 0 ? `
+                    <div class="metric overdue-metric" data-metric-id="engajamento-smb-atrasado-concluido" data-metric-title="Concluídas com Atraso (SMB)">
+                        <span class="metric-label"><i class="fas fa-history"></i>Concluídas (Atraso):</span>
+                        <span class="metric-value">${realizadosAtrasado.length}</span>
+                    </div>` : ''}
                     <div class="metric" data-metric-id="engajamento-smb-engajado" data-metric-title="Total Engajado (SMB)"><span class="metric-label">Total Engajado:</span><span class="metric-value success">${engajados.length}</span></div>
                     <div class="metric" data-metric-id="engajamento-smb-desengajado" data-metric-title="Total Desengajado (SMB)"><span class="metric-label">Total Desengajado:</span><span class="metric-value danger">${desengajados.length}</span></div>
                     <div class="metric">
@@ -2546,7 +2563,7 @@ const renderOKRs = () => {
                         <span class="metric-value" style="color: var(--primary-color);">${appGoals.engagement}%</span>
                     </div>
                 </div>
-                <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados foram classificados como 'Engajado'">
+                <div class="progress-bar-container" style="margin-top: 20px;" title="Performance de Engajamento: ${performancePerc.toFixed(1)}% dos contatos realizados (${totalRealizado}) foram classificados como 'Engajado'">
                     <div class="progress-bar"><div class="progress-bar-fill" style="width: ${performancePerc.toFixed(1)}%;"></div></div>
                     <span class="progress-percentage">${performancePerc.toFixed(1)}%</span>
                 </div>
@@ -2614,19 +2631,39 @@ const renderOKRs = () => {
     okrGrid.innerHTML = okrHtml;
 }; 
 
-const createOkrCard = (title, value, goal, unit = '', metricId, currentValue = null, goalValue = null, comparisonValue = null, clientesFaltantes = null) => {
+const createOkrCard = (title, value, goal, unit = '', metricId, currentValue = null, goalValue = null, comparisonValue = null, clientesFaltantes = null, selectedSegmento = '') => {
     const percentage = goal > 0 ? (value / goal) * 100 : 0;
     let valueText;
     let labelText = `Meta: ${goal}${unit}`;
-   
-    // NOVO: Adiciona a métrica de clientes faltantes
+    
     let clientesFaltantesHtml = '';
-    if (clientesFaltantes !== null) {
+    let distribuicaoContatosHtml = '';
+
+    if (clientesFaltantes !== null && clientesFaltantes > 0) {
         const totalParaMeta = (dataStore['total-clientes-unicos-cs'] || 0) * (goal / 100);
         clientesFaltantesHtml = `
-            <div class="metric overdue-metric" style="border-top: 1px dashed var(--border-color); padding-top: 10px;">
+            <div class="metric overdue-metric">
                 <span class="metric-label"><i class="fas fa-bullseye" style="color: var(--primary-color);"></i>Para a Meta:</span>
                 <span class="metric-value" style="font-size: 1.2rem;">${Math.ceil(totalParaMeta)} clientes (${clientesFaltantes} faltantes)</span>
+            </div>
+        `;
+
+        let ligacaoPerc = 0.65;
+        if (selectedSegmento === 'MID/Enterprise') {
+            ligacaoPerc = 0.75;
+        }
+        
+        const contatosLigacaoNecessarios = Math.ceil(clientesFaltantes * ligacaoPerc);
+        const contatosEmailNecessarios = clientesFaltantes - contatosLigacaoNecessarios;
+
+        distribuicaoContatosHtml = `
+            <div class="metric" style="font-size: 0.9rem; padding-top: 5px; padding-bottom: 0px;">
+                <span class="metric-label" style="font-weight: 500;"><i class="fas fa-phone-alt" style="margin-right: 6px;"></i>Meta: Contatos (Ligação/Reunião):</span>
+                <span class="metric-value" style="font-size: 1.1rem; color: var(--primary-color);">${contatosLigacaoNecessarios}</span>
+            </div>
+            <div class="metric" style="font-size: 0.9rem; padding-top: 5px;">
+                <span class="metric-label" style="font-weight: 500;"><i class="fas fa-envelope-open-text" style="margin-right: 6px;"></i>Meta: Contatos (E-mail/Whats):</span>
+                <span class="metric-value" style="font-size: 1.1rem; color: var(--primary-color);">${contatosEmailNecessarios}</span>
             </div>
         `;
     }
@@ -2657,13 +2694,12 @@ const createOkrCard = (title, value, goal, unit = '', metricId, currentValue = n
 
         trendHtml = `<span class="trend-indicator ${trendClass}" title="Comparado com ${comparisonValue.toFixed(1)}${unit} no período anterior">${trendIcon} ${trendText}</span>`;
     }
-   
+    
     const trendButtonHtml = currentUser.isManager ? `<button class="trend-chart-button" data-metric-id="${metricId}" data-metric-title="${title}" data-metric-type="okr" title="Ver Gráfico de Tendência"><i class="fas fa-chart-line"></i></button>` : '';
 
-    return `<div class="card"><h3>${title}${trendButtonHtml}</h3><div class="card-content"><div class="metric" data-metric-id="${metricId}" data-metric-title="${title}"><span class="metric-label">${labelText}</span><span class="metric-value">${valueText}${trendHtml}</span></div>${clientesFaltantesHtml}</div><div class="progress-bar-container" title="Atingimento da meta: ${percentage.toFixed(0)}%"><div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div><span class="progress-percentage">${percentage.toFixed(0)}%</span></div></div>`;
+    return `<div class="card"><h3>${title}${trendButtonHtml}</h3><div class="card-content"><div class="metric" data-metric-id="${metricId}" data-metric-title="${title}"><span class="metric-label">${labelText}</span><span class="metric-value">${valueText}${trendHtml}</span></div>${clientesFaltantesHtml}${distribuicaoContatosHtml}</div><div class="progress-bar-container" title="Atingimento da meta: ${percentage.toFixed(0)}%"><div class="progress-bar"><div class="progress-bar-fill" style="width: ${Math.min(percentage, 100)}%;"></div></div><span class="progress-percentage">${percentage.toFixed(0)}%</span></div></div>`;
 };
 
-// ... (código existente abaixo) ...
 const createPrevistoRealizadoCard = (title, previsto, realizadoNoPrazo, metricIdPrefix, goal = null, overdueCount = 0) => {
 const totalRealizado = realizadoNoPrazo + overdueCount;
 const percentage = previsto > 0 ? (realizadoNoPrazo / previsto) * 100 : 0;
@@ -2718,19 +2754,19 @@ if (!data || data.length === 0) return '<p style="padding: 20px; text-align: cen
 const headers = Object.keys(data[0]);
 const headerHtml = `<thead><tr>${headers.map(h => `<th><span>${h}</span></th>`).join('')}</tr></thead>`;
 const bodyHtml = `<tbody>${data.map(row => `<tr>${headers.map(h => {
-                                            const cellValue = row[h];
-                                            let displayValue = '';
-                                            if (cellValue instanceof Date) {
-                                                displayValue = formatDate(cellValue);
-                                            } else if (cellValue !== null && cellValue !== undefined) {
-                                                displayValue = cellValue;
-                                            }
-                                           
-                                            if(normalizeText(h) === 'cliente') {
-                                                return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
-                                            }
-                                            return `<td>${displayValue}</td>`;
-                                        }).join('')}</tr>`).join('')}</tbody>`;
+                                        const cellValue = row[h];
+                                        let displayValue = '';
+                                        if (cellValue instanceof Date) {
+                                            displayValue = formatDate(cellValue);
+                                        } else if (cellValue !== null && cellValue !== undefined) {
+                                            displayValue = cellValue;
+                                        }
+                                        
+                                        if(normalizeText(h) === 'cliente') {
+                                            return `<td><span data-client-name="${row[h]}">${displayValue}</span></td>`;
+                                        }
+                                        return `<td>${displayValue}</td>`;
+                                    }).join('')}</tr>`).join('')}</tbody>`;
 return `<table class="data-table">${headerHtml}${bodyHtml}</table>`;
 };
 
@@ -2924,7 +2960,7 @@ const squadCsListDiv = document.getElementById('squad-cs-list');
                 if (selectedSquadValue !== 'Todos') {
                     if(selectCS.value !== 'Todos') selectCS.value = 'Todos';
                     selectCS.disabled = true;
-                   
+                    
                     const csInSquad = [];
                     for (const [cs, squad] of csToSquadMap.entries()) {
                         if (squad === selectedSquadValue) {
@@ -2952,7 +2988,7 @@ const squadCsListDiv = document.getElementById('squad-cs-list');
             const filteredClients = clientsForSegmentCheck.filter(d => d.CS?.trim() === selectedCSValue);
             autoSelectSegment(filteredClients);
         }
-       
+        
         if (targetId === 'select-onboarding-team') {
             updateIsmFilter();
         }
@@ -3075,29 +3111,29 @@ const selectedSegmento = selectSegmento.value;
 const includeOnboarding = onboardingToggle.checked;
 
 const indicadoresGeraisHtml = `
-                                            <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
-                                            <table>
-                                                <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
-                                                <tbody>
-                                                    <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
-                                                    <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
-                                                    <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
-                                                    <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
-                                                    <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
-                                                </tbody>
-                                            </table>`;
+                                                <h2><i class="fas fa-chart-bar"></i> Indicadores Gerais</h2>
+                                                <table>
+                                                    <thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th></tr></thead>
+                                                    <tbody>
+                                                        <tr><td>Total de Clientes na Carteira</td><td>${(reportData['total-clientes'] || []).length}</td><td>N/A</td></tr>
+                                                        <tr><td>Clientes Únicos Contatados</td><td>${(reportData['cob-carteira'] || []).length}</td><td>N/A</td></tr>
+                                                        <tr><td>Cobertura de Carteira</td><td>${((reportData['cob-carteira']?.length || 0) * 100 / (reportData['total-clientes-unicos-cs'] || 1)).toFixed(1)}%</td><td>${goals.coverage}%</td></tr>
+                                                        <tr><td>Média Sense Score</td><td>${(reportData['sensescore-avg'] || 0).toFixed(1)} pts</td><td>${goals.sensescore} pts</td></tr>
+                                                        <tr><td>Participação SKA LABS (Trimestre)</td><td>${(((reportData['ska-labs-realizado-list']?.length || 0) * 100) / (reportData['total-labs-eligible'] || 1)).toFixed(1)}%</td><td>${goals.labs}%</td></tr>
+                                                    </tbody>
+                                                </table>`;
 
 const tiposDeContatoHtml = `
-                                            <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
-                                            <table>
-                                                <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
-                                                <tbody>
-                                                    <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
-                                                    <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
-                                                    <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
-                                                    ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
-                                                </tbody>
-                                            </table>`;
+                                                <h2><i class="fas fa-headset"></i> Tipos de Contato (Mês)</h2>
+                                                <table>
+                                                    <thead><tr><th>Tipo de Contato</th><th>Quantidade</th></tr></thead>
+                                                    <tbody>
+                                                        <tr><td>📞 Ligação/Reunião (CS)</td><td>${(reportData['contato-ligacao'] || []).length}</td></tr>
+                                                        <tr><td style="padding-left: 30px;">↳ com 'Contato Consolidado' Concluído</td><td>${reportData['ligacao-com-consolidado'] || 0}</td></tr>
+                                                        <tr><td>✉️ E-mail/Whatsapp (CS)</td><td>${(reportData['contato-email'] || []).length}</td></tr>
+                                                        ${includeOnboarding ? `<tr><td>🚀 Contatos de Onboarding</td><td>${(reportData['onboarding-contacts-display'] || []).length}</td></tr>` : ''}
+                                                    </tbody>
+                                                </table>`;
 
 const playbooksData = [];
 const playbookDefs = {
@@ -3253,5 +3289,6 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
+
 </body>
 </html>
