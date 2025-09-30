@@ -1377,10 +1377,12 @@ updateDashboard();
 const readFile = (file) => new Promise((resolve, reject) => {
 
 const excelSerialToDateObject = (serial) => {
-const correctedSerial = serial + 1;
-const excelTimestamp = (correctedSerial - 25569) * 86400 * 1000;
-const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
-return new Date(excelTimestamp + timezoneOffset);
+    // Converte o número serial do Excel para um timestamp (milissegundos) em UTC.
+    // O número 25569 representa a diferença de dias entre o início do Excel (1900) e o do Unix (1970).
+    const excelTimestamp = (serial - 25569) * 86400 * 1000;
+
+    // Retorna um objeto de data baseado diretamente no timestamp UTC, sem ajustes de fuso horário.
+    return new Date(excelTimestamp);
 }
 
 const transpilePipeToCommaCSV = (pipeText) => {
